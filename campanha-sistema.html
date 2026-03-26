@@ -1754,7 +1754,7 @@
   function handleImportFile(file) {
     if (!file) return;
     if (typeof XLSX === 'undefined') {
-      showToast('⚠️ Biblioteca Excel não carregada. Verifique sua conexão.', '#e3b341');
+      showToast('⚠️ Biblioteca Excel não disponível. Recarregue a página ou verifique sua conexão.', '#e3b341');
       return;
     }
     const reader = new FileReader();
@@ -1806,7 +1806,7 @@
       const count = rows.length - 1;
       const el = document.getElementById('counter-eleitores');
       if (el) el.textContent = count.toLocaleString('pt-BR');
-      document.querySelector('[data-key="crm-eleitores"] .stat-value, #mod-crm .stat-value')?.dispatchEvent(new Event('change'));
+      document.querySelector('#mod-crm .stat-value')?.parentElement?.dispatchEvent(new Event('refresh'));
     }
     // Log to history
     const now = new Date().toLocaleString('pt-BR');
@@ -1877,18 +1877,19 @@
 
   function downloadModeloExcel() {
     if (typeof XLSX === 'undefined') {
-      showToast('⚠️ Biblioteca Excel não carregada. Verifique sua conexão.', '#e3b341');
+      showToast('⚠️ Biblioteca Excel não disponível. Recarregue a página ou verifique sua conexão.', '#e3b341');
       return;
     }
     const wb = XLSX.utils.book_new();
     const sheets = _buildModeloSheets();
     Object.entries(sheets).forEach(([name, data]) => {
       const ws = XLSX.utils.aoa_to_sheet(data);
-      // Auto column width
-      const cols = (data[0]||[]).map((_, ci) => ({
-        wch: Math.max(...data.map(r => String(r[ci]??'').length), String(data[0][ci]||'').length) + 2
+      // Auto column width — single pass
+      const colWidths = (data[0]||[]).map(h => String(h||'').length + 2);
+      data.slice(1).forEach(row => row.forEach((cell, ci) => {
+        colWidths[ci] = Math.max(colWidths[ci]||0, String(cell??'').length + 2);
       }));
-      ws['!cols'] = cols;
+      ws['!cols'] = colWidths.map(wch => ({wch}));
       XLSX.utils.book_append_sheet(wb, ws, name);
     });
     XLSX.writeFile(wb, 'modelo-campanha-votamax.xlsx');
@@ -1897,7 +1898,7 @@
 
   function downloadSheetModelo(sheetName) {
     if (typeof XLSX === 'undefined') {
-      showToast('⚠️ Biblioteca Excel não carregada. Verifique sua conexão.', '#e3b341');
+      showToast('⚠️ Biblioteca Excel não disponível. Recarregue a página ou verifique sua conexão.', '#e3b341');
       return;
     }
     const sheets = _buildModeloSheets();
