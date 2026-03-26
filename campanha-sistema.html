@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Integrado de Campanha</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #484f58;
+    --green: #3fb950;
+    --green-bg: rgba(63,185,80,0.12);
+    --blue: #58a6ff;
+    --blue-bg: rgba(88,166,255,0.12);
+    --yellow: #e3b341;
+    --yellow-bg: rgba(227,179,65,0.12);
+    --red: #f85149;
+    --red-bg: rgba(248,81,73,0.12);
+    --purple: #a5a0f0;
+    --purple-bg: rgba(165,160,240,0.12);
+    --orange: #f0883e;
+    --orange-bg: rgba(240,136,62,0.12);
+    --teal: #39d353;
+    --accent: #238636;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; display: flex; height: 100vh; overflow: hidden; }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: 220px; min-width: 220px; background: var(--bg2);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    overflow-y: auto; z-index: 10;
+  }
+  .sidebar-header {
+    padding: 16px 14px 12px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 2px;
+  }
+  .sidebar-logo span { color: var(--green); }
+  .sidebar-sub { font-size: 11px; color: var(--text2); }
+  .sidebar-section { padding: 10px 8px 4px; }
+  .sidebar-section-title { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 6px; margin-bottom: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px; padding: 7px 10px;
+    border-radius: 6px; cursor: pointer; color: var(--text2); font-size: 12.5px;
+    transition: all 0.15s; margin-bottom: 1px; white-space: nowrap;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  .nav-item.active { background: var(--green-bg); color: var(--green); font-weight: 500; }
+  .nav-icon { width: 16px; text-align: center; flex-shrink: 0; font-size: 14px; }
+  .nav-badge { margin-left: auto; font-size: 10px; background: var(--accent); color: #fff; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+  .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
+  .candidate-card { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 10px; }
+  .candidate-name { font-weight: 600; font-size: 13px; color: var(--text); }
+  .candidate-role { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .candidate-progress { margin-top: 8px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 1s; }
+
+  /* MAIN */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #topbar {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 10px 20px; display: flex; align-items: center; gap: 12px;
+  }
+  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; }
+  .topbar-actions { display: flex; gap: 8px; }
+  .btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: all 0.15s; font-family: var(--font); white-space: nowrap; }
+  .btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2ea043; }
+  .btn-danger { border-color: var(--red); color: var(--red); }
+  .btn-danger:hover { background: var(--red-bg); }
+  .topbar-search { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text); font-family: var(--font); font-size: 12px; width: 200px; outline: none; }
+  .topbar-search:focus { border-color: var(--border2); }
+
+  #content { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1; }
+  .stat-change { font-size: 11px; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+  .stat-up { color: var(--green); }
+  .stat-down { color: var(--red); }
+  .stat-neutral { color: var(--text2); }
+  .stat-bar { margin-top: 8px; height: 3px; background: var(--border); border-radius: 2px; }
+  .stat-bar-fill { height: 100%; border-radius: 2px; }
+
+  /* GRID LAYOUT */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .card-action { font-size: 11px; color: var(--blue); cursor: pointer; }
+  .card-action:hover { text-decoration: underline; }
+
+  /* TABLE */
+  .table-container { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 8px 12px; color: var(--text2); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+  .badge-purple { background: var(--purple-bg); color: var(--purple); }
+  .badge-gray { background: rgba(255,255,255,0.06); color: var(--text2); }
+  .badge-orange { background: var(--orange-bg); color: var(--orange); }
+
+  /* AVATAR */
+  .avatar { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+  .av-green { background: var(--green-bg); color: var(--green); }
+  .av-blue { background: var(--blue-bg); color: var(--blue); }
+  .av-purple { background: var(--purple-bg); color: var(--purple); }
+  .av-orange { background: var(--orange-bg); color: var(--orange); }
+  .av-yellow { background: var(--yellow-bg); color: var(--yellow); }
+
+  /* INLINE ITEMS */
+  .inline-person { display: flex; align-items: center; gap: 8px; }
+  .person-info { display: flex; flex-direction: column; }
+  .person-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .person-sub { font-size: 11px; color: var(--text2); }
+
+  /* MAP PLACEHOLDER */
+  .map-area { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  .map-icon { font-size: 36px; }
+  .map-label { color: var(--text2); font-size: 13px; }
+
+  /* HEATMAP */
+  .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .hm-cell { aspect-ratio: 1; border-radius: 2px; cursor: pointer; transition: opacity 0.15s; }
+  .hm-cell:hover { opacity: 0.7; }
+
+  /* ALERT */
+  .alert { border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 12px; display: flex; align-items: flex-start; gap: 10px; }
+  .alert-red { background: var(--red-bg); border-left: 3px solid var(--red); }
+  .alert-yellow { background: var(--yellow-bg); border-left: 3px solid var(--yellow); }
+  .alert-green { background: var(--green-bg); border-left: 3px solid var(--green); }
+  .alert-title { font-weight: 600; margin-bottom: 2px; }
+
+  /* RANK */
+  .rank-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .rank-item:last-child { border-bottom: none; }
+  .rank-pos { font-size: 11px; font-weight: 700; color: var(--text3); width: 18px; text-align: center; }
+  .rank-bar-wrap { flex: 1; }
+  .rank-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .rank-fill { height: 100%; border-radius: 3px; }
+  .rank-pts { font-size: 12px; font-weight: 700; color: var(--text); min-width: 40px; text-align: right; }
+
+  /* FORM INPUTS */
+  .form-group { margin-bottom: 12px; }
+  .form-label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-family: var(--font); font-size: 12px; outline: none; transition: border-color 0.15s; }
+  .form-input:focus { border-color: var(--border2); }
+  select.form-input option { background: var(--bg2); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .tab { padding: 8px 16px; font-size: 12px; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--green); font-weight: 500; }
+
+  /* DONUT */
+  .donut-wrap { display: flex; align-items: center; gap: 16px; }
+  .donut-legend { flex: 1; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { font-size: 12px; color: var(--text2); }
+  .legend-val { font-size: 12px; font-weight: 600; color: var(--text); margin-left: auto; }
+
+  /* TIMELINE */
+  .timeline-item { display: flex; gap: 12px; margin-bottom: 14px; }
+  .timeline-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .timeline-line { position: relative; }
+  .timeline-line::after { content: ''; position: absolute; left: 3.5px; top: 14px; bottom: -14px; width: 1px; background: var(--border); }
+  .timeline-content { flex: 1; }
+  .timeline-title { font-size: 12px; font-weight: 500; color: var(--text); }
+  .timeline-time { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+  /* HIDDEN SECTIONS */
+  .module-section { display: none; }
+  .module-section.active { display: block; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* MINI CHART BARS */
+  .mini-chart { display: flex; align-items: flex-end; gap: 2px; height: 30px; }
+  .mini-bar { flex: 1; border-radius: 2px 2px 0 0; min-height: 2px; }
+
+  /* METRIC ROW */
+  .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-key { color: var(--text2); }
+  .metric-val { font-weight: 600; color: var(--text); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 20px; width: 480px; max-width: 95vw; max-height: 80vh; overflow-y: auto; }
+  .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  /* NOTIF DOT */
+  .notif { position: relative; }
+  .notif::after { content: ''; position: absolute; top: 0; right: 0; width: 6px; height: 6px; background: var(--red); border-radius: 50%; border: 1px solid var(--bg2); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    #sidebar { width: 180px; min-width: 180px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🗳️ <span>VotaMax</span></div>
+    <div class="sidebar-sub">Sistema de Campanha v2.0</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Principal</div>
+    <div class="nav-item active" onclick="showModule('dashboard', this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Módulos</div>
+    <div class="nav-item" onclick="showModule('crm', this)">
+      <span class="nav-icon">👥</span> CRM Eleitores
+      <span class="nav-badge">2.4k</span>
+    </div>
+    <div class="nav-item" onclick="showModule('liderancas', this)">
+      <span class="nav-icon">🧑‍🤝‍🧑</span> Lideranças
+    </div>
+    <div class="nav-item" onclick="showModule('rua', this)">
+      <span class="nav-icon">🐜</span> Operação de Rua
+    </div>
+    <div class="nav-item" onclick="showModule('logistica', this)">
+      <span class="nav-icon">🚗</span> Logística
+    </div>
+    <div class="nav-item" onclick="showModule('materiais', this)">
+      <span class="nav-icon">📦</span> Materiais
+    </div>
+    <div class="nav-item notif" onclick="showModule('mapa', this)">
+      <span class="nav-icon">📍</span> Mapa Eleitoral
+    </div>
+    <div class="nav-item" onclick="showModule('bi', this)">
+      <span class="nav-icon">📈</span> Inteligência BI
+    </div>
+    <div class="nav-item notif" onclick="showModule('comunicacao', this)">
+      <span class="nav-icon">📢</span> Comunicação
+    </div>
+    <div class="nav-item" onclick="showModule('agenda', this)">
+      <span class="nav-icon">🗓️</span> Agenda
+    </div>
+    <div class="nav-item" onclick="showModule('financeiro', this)">
+      <span class="nav-icon">💰</span> Financeiro
+    </div>
+    <div class="nav-item" onclick="showModule('gamificacao', this)">
+      <span class="nav-icon">🏆</span> Gamificação
+    </div>
+    <div class="nav-item" onclick="showModule('seguranca', this)">
+      <span class="nav-icon">🔐</span> Segurança
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="candidate-card">
+      <div class="candidate-name">Dr. Carlos Mendes</div>
+      <div class="candidate-role">Candidato a Vereador</div>
+      <div class="candidate-progress">
+        <div class="progress-label"><span>Meta de votos</span><span style="color:var(--green);font-weight:600">67%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:67%;background:var(--green)"></div></div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="page-title">Dashboard Geral</div>
+    <input type="text" class="topbar-search" placeholder="🔍  Buscar eleitor, bairro...">
+    <div class="topbar-actions">
+      <button class="btn" onclick="document.getElementById('modal-eleitor').classList.add('open')">+ Novo Eleitor</button>
+      <button class="btn btn-primary">↗ Exportar</button>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="mod-dashboard" class="module-section active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Eleitores</div>
+          <div class="stat-value" id="counter-eleitores">0</div>
+          <div class="stat-change stat-up">▲ +127 esta semana</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:67%;background:var(--green)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Confirmados</div>
+          <div class="stat-value" id="counter-confirmados">0</div>
+          <div class="stat-change stat-up">▲ +43 hoje</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:58%;background:var(--blue)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Líderes Ativos</div>
+          <div class="stat-value">84</div>
+          <div class="stat-change stat-neutral">→ estável</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:84%;background:var(--purple)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Votos Projetados</div>
+          <div class="stat-value" id="counter-votos">0</div>
+          <div class="stat-change stat-up">▲ Meta: 8.200</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:72%;background:var(--yellow)"></div></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:16px">
+        <!-- Alertas Inteligentes -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔔 Alertas Inteligentes</div>
+            <span class="badge badge-red">3 urgentes</span>
+          </div>
+          <div class="alert alert-red">
+            <div>
+              <div class="alert-title">⚠️ Bairro Jardim Sul — queda 34%</div>
+              Produção caiu nos últimos 3 dias. Reforçar equipe.
+            </div>
+          </div>
+          <div class="alert alert-yellow">
+            <div>
+              <div class="alert-title">⏰ Liderança "João Pereira" parada</div>
+              Sem atividade há 5 dias. Contatar imediatamente.
+            </div>
+          </div>
+          <div class="alert alert-green">
+            <div>
+              <div class="alert-title">✅ Nova Esperança superou meta</div>
+              +23% acima do planejado. Replicar estratégia.
+            </div>
+          </div>
+        </div>
+
+        <!-- Atividade Recente -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🕐 Atividade em Tempo Real</div>
+            <span class="badge badge-green">● ao vivo</span>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot timeline-line" style="background:var(--green)"></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Ana Lima cadastrou 12 eleitores</div>
+              <div class="timeline-time">Bairro Centro — há 3 min</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot timeline-line" style="background:var(--blue)"></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Rota 07 iniciou cobertura</div>
+              <div class="timeline-time">Vila Nova — há 8 min</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot timeline-line" style="background:var(--yellow)"></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Disparo de WhatsApp enviado</div>
+              <div class="timeline-time">420 mensagens — há 15 min</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:var(--purple)"></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Evento "Caminhada Norte" registrado</div>
+              <div class="timeline-time">280 presentes — há 1h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <!-- Por Bairro -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📍 Top Bairros</div></div>
+          <div class="rank-item">
+            <div class="rank-pos">1</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Centro</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:90%;background:var(--green)"></div></div>
+            </div>
+            <div class="rank-pts">834</div>
+          </div>
+          <div class="rank-item">
+            <div class="rank-pos">2</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Vila Nova</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:75%;background:var(--blue)"></div></div>
+            </div>
+            <div class="rank-pts">692</div>
+          </div>
+          <div class="rank-item">
+            <div class="rank-pos">3</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Nova Esperança</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:60%;background:var(--purple)"></div></div>
+            </div>
+            <div class="rank-pts">554</div>
+          </div>
+          <div class="rank-item">
+            <div class="rank-pos">4</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Jardim Sul</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:38%;background:var(--red)"></div></div>
+            </div>
+            <div class="rank-pts">349</div>
+          </div>
+          <div class="rank-item">
+            <div class="rank-pos">5</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Setor Leste</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:28%;background:var(--yellow)"></div></div>
+            </div>
+            <div class="rank-pts">261</div>
+          </div>
+        </div>
+
+        <!-- Distribuição perfis -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🧩 Perfil dos Eleitores</div></div>
+          <div class="donut-wrap">
+            <svg viewBox="0 0 80 80" width="80" height="80" style="flex-shrink:0">
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#1c2128" stroke-width="12"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#3fb950" stroke-width="12" stroke-dasharray="63 113" stroke-dashoffset="-7" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#e3b341" stroke-width="12" stroke-dasharray="40 136" stroke-dashoffset="-70" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#58a6ff" stroke-width="12" stroke-dasharray="35 141" stroke-dashoffset="-110" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#f85149" stroke-width="12" stroke-dasharray="38 138" stroke-dashoffset="-145" transform="rotate(-90 40 40)"/>
+              <text x="40" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="#e6edf3">100%</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span class="legend-label">Confirmado</span><span class="legend-val">36%</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div><span class="legend-label">Simpatizante</span><span class="legend-val">23%</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><span class="legend-label">Indeciso</span><span class="legend-val">20%</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span class="legend-label">Oposição</span><span class="legend-val">21%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Produção semanal -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📅 Cadastros — 7 dias</div></div>
+          <div style="display:flex;align-items:flex-end;gap:4px;height:90px;padding:8px 0">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="flex:1;width:100%;background:var(--blue);border-radius:3px 3px 0 0;min-height:20px;height:45%"></div>
+              <div style="font-size:10px;color:var(--text3)">S</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="flex:1;width:100%;background:var(--blue);border-radius:3px 3px 0 0;height:62%"></div>
+              <div style="font-size:10px;color:var(--text3)">T</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="flex:1;width:100%;background:var(--blue);border-radius:3px 3px 0 0;height:75%"></div>
+              <div style="font-size:10px;color:var(--text3)">Q</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="flex:1;width:100%;background:var(--blue);border-radius:3px 3px 0 0;height:55%"></div>
+              <div style="font-size:10px;color:var(--text3)">Q</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="flex:1;width:100%;background:var(--blue);border-radius:3px 3px 0 0;height:90%"></div>
+              <div style="font-size:10px;color:var(--text3)">S</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="flex:1;width:100%;background:var(--green);border-radius:3px 3px 0 0;height:100%"></div>
+              <div style="font-size:10px;color:var(--text3)">S</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="flex:1;width:100%;background:var(--border);border-radius:3px 3px 0 0;height:30%"></div>
+              <div style="font-size:10px;color:var(--text3)">D</div>
+            </div>
+          </div>
+          <div class="metric-row"><div class="metric-key">Total semana</div><div class="metric-val" style="color:var(--green)">+742</div></div>
+          <div class="metric-row"><div class="metric-key">Média/dia</div><div class="metric-val">106</div></div>
+          <div class="metric-row"><div class="metric-key">Melhor dia</div><div class="metric-val">Sábado (189)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CRM ===== -->
+    <div id="mod-crm" class="module-section">
+      <div class="tabs">
+        <div class="tab active">Todos (2.413)</div>
+        <div class="tab">Confirmados</div>
+        <div class="tab">Simpatizantes</div>
+        <div class="tab">Indecisos</div>
+        <div class="tab">Oposição</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Base de Eleitores</div>
+          <div style="display:flex;gap:8px">
+            <select class="form-input" style="width:130px;padding:5px 10px">
+              <option>Todos os bairros</option>
+              <option>Centro</option>
+              <option>Vila Nova</option>
+              <option>Jardim Sul</option>
+            </select>
+            <button class="btn btn-primary" onclick="document.getElementById('modal-eleitor').classList.add('open')">+ Cadastrar</button>
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Eleitor</th><th>Telefone</th><th>Bairro</th><th>Idade</th><th>Classificação</th><th>Cadastrado por</th><th>Última interação</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="inline-person"><div class="avatar av-green">MA</div><div class="person-info"><div class="person-name">Maria Aparecida</div><div class="person-sub">Professora</div></div></div></td>
+                <td>(69) 99234-5678</td><td>Centro</td><td>42</td>
+                <td><span class="badge badge-green">✅ Confirmado</span></td>
+                <td>Ana Lima</td><td style="color:var(--text2)">hoje</td>
+                <td><button class="btn" style="padding:3px 8px;font-size:11px">Ver</button></td>
+              </tr>
+              <tr>
+                <td><div class="inline-person"><div class="avatar av-blue">JR</div><div class="person-info"><div class="person-name">João Roberto</div><div class="person-sub">Comerciante</div></div></div></td>
+                <td>(69) 98145-2390</td><td>Vila Nova</td><td>55</td>
+                <td><span class="badge badge-yellow">🟡 Simpatizante</span></td>
+                <td>Carlos Souza</td><td style="color:var(--text2)">ontem</td>
+                <td><button class="btn" style="padding:3px 8px;font-size:11px">Ver</button></td>
+              </tr>
+              <tr>
+                <td><div class="inline-person"><div class="avatar av-orange">FS</div><div class="person-info"><div class="person-name">Fernanda Silva</div><div class="person-sub">Servidora pública</div></div></div></td>
+                <td>(69) 99087-4512</td><td>Nova Esperança</td><td>38</td>
+                <td><span class="badge badge-gray">⚪ Indeciso</span></td>
+                <td>Pedro Oliveira</td><td style="color:var(--text2)">3 dias</td>
+                <td><button class="btn" style="padding:3px 8px;font-size:11px">Ver</button></td>
+              </tr>
+              <tr>
+                <td><div class="inline-person"><div class="avatar av-purple">LM</div><div class="person-info"><div class="person-name">Luiz Mendonça</div><div class="person-sub">Aposentado</div></div></div></td>
+                <td>(69) 99334-8901</td><td>Jardim Sul</td><td>67</td>
+                <td><span class="badge badge-green">✅ Confirmado</span></td>
+                <td>Ana Lima</td><td style="color:var(--text2)">2 dias</td>
+                <td><button class="btn" style="padding:3px 8px;font-size:11px">Ver</button></td>
+              </tr>
+              <tr>
+                <td><div class="inline-person"><div class="avatar av-yellow">RC</div><div class="person-info"><div class="person-name">Rosana Castro</div><div class="person-sub">Autônoma</div></div></div></td>
+                <td>(69) 98776-3401</td><td>Setor Leste</td><td>29</td>
+                <td><span class="badge badge-red">🔴 Oposição</span></td>
+                <td>Marcos Dias</td><td style="color:var(--text2)">1 semana</td>
+                <td><button class="btn" style="padding:3px 8px;font-size:11px">Ver</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--text2);font-size:12px">
+          <span>Mostrando 1–5 de 2.413</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn">← Anterior</button>
+            <button class="btn btn-primary">Próximo →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LIDERANÇAS ===== -->
+    <div id="mod-liderancas" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Coordenadores</div><div class="stat-value">8</div><div class="stat-change stat-neutral">Gerais + Regionais</div></div>
+        <div class="stat-card"><div class="stat-label">Líderes de Bairro</div><div class="stat-value">34</div><div class="stat-change stat-up">▲ +3 novos</div></div>
+        <div class="stat-card"><div class="stat-label">Cabos Eleitorais</div><div class="stat-value">127</div><div class="stat-change stat-up">▲ +18 esta semana</div></div>
+        <div class="stat-card"><div class="stat-label">Votos Mapeados</div><div class="stat-value">5.890</div><div class="stat-change stat-neutral">72% da meta</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Estrutura de Lideranças</div><button class="btn btn-primary">+ Novo Líder</button></div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Liderança</th><th>Cargo</th><th>Bairro</th><th>Equipe</th><th>Votos Est.</th><th>Meta</th><th>Efetividade</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="inline-person"><div class="avatar av-green">JP</div><div class="person-info"><div class="person-name">João Pereira</div><div class="person-sub">Coord. Regional</div></div></div></td>
+                <td><span class="badge badge-purple">Coord. Geral</span></td>
+                <td>Centro + Norte</td><td>23 pessoas</td><td>1.200</td>
+                <td>1.000</td><td><span style="color:var(--green);font-weight:700">120%</span></td>
+                <td><span class="badge badge-green">Ativo</span></td>
+              </tr>
+              <tr>
+                <td><div class="inline-person"><div class="avatar av-blue">MS</div><div class="person-info"><div class="person-name">Maria Santos</div><div class="person-sub">Líder de Bairro</div></div></div></td>
+                <td><span class="badge badge-blue">Líder Bairro</span></td>
+                <td>Vila Nova</td><td>8 pessoas</td><td>420</td>
+                <td>400</td><td><span style="color:var(--green);font-weight:700">105%</span></td>
+                <td><span class="badge badge-green">Ativo</span></td>
+              </tr>
+              <tr>
+                <td><div class="inline-person"><div class="avatar av-orange">RF</div><div class="person-info"><div class="person-name">Roberto Faria</div><div class="person-sub">Cabo Eleitoral</div></div></div></td>
+                <td><span class="badge badge-orange">Cabo Eleit.</span></td>
+                <td>Jardim Sul</td><td>4 pessoas</td><td>85</td>
+                <td>150</td><td><span style="color:var(--red);font-weight:700">57%</span></td>
+                <td><span class="badge badge-yellow">Baixo desempenho</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== OPERAÇÃO DE RUA ===== -->
+    <div id="mod-rua" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Formiguinhas Ativas</div><div class="stat-value">47</div><div class="stat-change stat-up">● em campo agora</div></div>
+        <div class="stat-card"><div class="stat-label">Casas Visitadas Hoje</div><div class="stat-value">1.342</div><div class="stat-change stat-up">▲ +890 vs ontem</div></div>
+        <div class="stat-card"><div class="stat-label">Taxa de Conversão</div><div class="stat-value">38%</div><div class="stat-change stat-up">▲ +4% esta semana</div></div>
+        <div class="stat-card"><div class="stat-label">Horas em Campo</div><div class="stat-value">284h</div><div class="stat-change stat-neutral">acumulado hoje</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🐜 Ranking das Formiguinhas — Hoje</div></div>
+          <div class="rank-item">
+            <div class="rank-pos" style="color:var(--yellow)">🥇</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Ana Lima</div>
+              <div class="person-sub" style="font-size:11px;color:var(--text2)">34 casas · 16 conversões</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:100%;background:var(--yellow)"></div></div>
+            </div>
+            <div class="rank-pts" style="color:var(--yellow)">940pts</div>
+          </div>
+          <div class="rank-item">
+            <div class="rank-pos" style="color:var(--text2)">🥈</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Carlos Souza</div>
+              <div class="person-sub" style="font-size:11px;color:var(--text2)">29 casas · 12 conversões</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:82%;background:var(--blue)"></div></div>
+            </div>
+            <div class="rank-pts">780pts</div>
+          </div>
+          <div class="rank-item">
+            <div class="rank-pos" style="color:var(--orange)">🥉</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Pedro Oliveira</div>
+              <div class="person-sub" style="font-size:11px;color:var(--text2)">24 casas · 10 conversões</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:68%;background:var(--orange)"></div></div>
+            </div>
+            <div class="rank-pts">640pts</div>
+          </div>
+          <div class="rank-item">
+            <div class="rank-pos">4</div>
+            <div class="rank-bar-wrap">
+              <div class="person-name">Marcos Dias</div>
+              <div class="person-sub" style="font-size:11px;color:var(--text2)">19 casas · 7 conversões</div>
+              <div class="rank-bar"><div class="rank-fill" style="width:50%;background:var(--green)"></div></div>
+            </div>
+            <div class="rank-pts">490pts</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Produção por Hora</div></div>
+          <div style="display:flex;align-items:flex-end;gap:3px;height:100px">
+            <div style="flex:1;background:var(--border);border-radius:3px 3px 0 0;height:20%"></div>
+            <div style="flex:1;background:var(--border);border-radius:3px 3px 0 0;height:15%"></div>
+            <div style="flex:1;background:var(--blue-bg);border-radius:3px 3px 0 0;height:35%"></div>
+            <div style="flex:1;background:var(--blue);border-radius:3px 3px 0 0;height:55%"></div>
+            <div style="flex:1;background:var(--blue);border-radius:3px 3px 0 0;height:70%"></div>
+            <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:90%"></div>
+            <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:100%"></div>
+            <div style="flex:1;background:var(--blue);border-radius:3px 3px 0 0;height:85%"></div>
+            <div style="flex:1;background:var(--blue);border-radius:3px 3px 0 0;height:75%"></div>
+            <div style="flex:1;background:var(--yellow);border-radius:3px 3px 0 0;height:60%"></div>
+            <div style="flex:1;background:var(--border);border-radius:3px 3px 0 0;height:30%"></div>
+            <div style="flex:1;background:var(--border);border-radius:3px 3px 0 0;height:10%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
+            <span>06h</span><span>09h</span><span>12h</span><span>15h</span><span>18h</span><span>21h</span>
+          </div>
+          <div style="margin-top:12px">
+            <div class="metric-row"><div class="metric-key">Pico de produção</div><div class="metric-val" style="color:var(--green)">14h–16h</div></div>
+            <div class="metric-row"><div class="metric-key">Casas/hora (média)</div><div class="metric-val">187</div></div>
+            <div class="metric-row"><div class="metric-key">Meta diária</div><div class="metric-val">1.500 casas</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LOGÍSTICA ===== -->
+    <div id="mod-logistica" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Veículos Ativos</div><div class="stat-value">12</div><div class="stat-change stat-up">● 9 em rota</div></div>
+        <div class="stat-card"><div class="stat-label">Km Rodado Hoje</div><div class="stat-value">847</div><div class="stat-change stat-neutral">estimado</div></div>
+        <div class="stat-card"><div class="stat-label">Combustível Gasto</div><div class="stat-value">R$ 623</div><div class="stat-change stat-neutral">hoje</div></div>
+        <div class="stat-card"><div class="stat-label">Rotas Concluídas</div><div class="stat-value">7/12</div><div class="stat-change stat-up">▲ 58% completo</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🚗 Frota em Campo</div><button class="btn btn-primary">+ Nova Rota</button></div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Veículo</th><th>Motorista</th><th>Bairro/Rota</th><th>Equipe</th><th>Status</th><th>Km</th><th>Combustível</th></tr></thead>
+            <tbody>
+              <tr><td>🚐 Sprinter 01</td><td>Carlos M.</td><td>Centro Norte</td><td>6 pessoas</td><td><span class="badge badge-green">● Em rota</span></td><td>87 km</td><td>R$ 68</td></tr>
+              <tr><td>🚙 Hilux 03</td><td>Pedro A.</td><td>Vila Nova</td><td>4 pessoas</td><td><span class="badge badge-green">● Em rota</span></td><td>52 km</td><td>R$ 48</td></tr>
+              <tr><td>🚐 Van 05</td><td>Jorge L.</td><td>—</td><td>—</td><td><span class="badge badge-yellow">⏸ Parado</span></td><td>0 km</td><td>R$ 0</td></tr>
+              <tr><td>🚙 S10 02</td><td>Rafael T.</td><td>Jardim Sul</td><td>5 pessoas</td><td><span class="badge badge-blue">✓ Concluído</span></td><td>134 km</td><td>R$ 105</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MATERIAIS ===== -->
+    <div id="mod-materiais" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Santinhos</div><div class="stat-value">48.200</div><div class="stat-change stat-down">▼ 62% distribuído</div></div>
+        <div class="stat-card"><div class="stat-label">Camisas</div><div class="stat-value">890</div><div class="stat-change stat-up">▲ 200 em estoque</div></div>
+        <div class="stat-card"><div class="stat-label">Adesivos</div><div class="stat-value">12.400</div><div class="stat-change stat-neutral">78% distribuído</div></div>
+        <div class="stat-card"><div class="stat-label">Bandeiras</div><div class="stat-value">620</div><div class="stat-change stat-down">▼ estoque crítico</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📦 Estoque Atual</div><button class="btn btn-primary">+ Entrada</button></div>
+          <table style="width:100%;font-size:12px">
+            <thead><tr><th>Item</th><th>Total</th><th>Distribuído</th><th>Estoque</th><th>Situação</th></tr></thead>
+            <tbody>
+              <tr><td>Santinhos 10x15</td><td>80.000</td><td>48.200</td><td>31.800</td><td><span class="badge badge-green">OK</span></td></tr>
+              <tr><td>Santinhos A4</td><td>10.000</td><td>9.200</td><td>800</td><td><span class="badge badge-yellow">Baixo</span></td></tr>
+              <tr><td>Camisas Polo</td><td>500</td><td>300</td><td>200</td><td><span class="badge badge-yellow">Baixo</span></td></tr>
+              <tr><td>Camisas Básica</td><td>600</td><td>390</td><td>210</td><td><span class="badge badge-green">OK</span></td></tr>
+              <tr><td>Adesivos carro</td><td>5.000</td><td>4.100</td><td>900</td><td><span class="badge badge-yellow">Baixo</span></td></tr>
+              <tr><td>Bandeiras 90x120</td><td>700</td><td>620</td><td>80</td><td><span class="badge badge-red">Crítico</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📤 Distribuição Recente</div></div>
+          <div class="timeline-item"><div class="timeline-dot timeline-line" style="background:var(--green)"></div><div class="timeline-content"><div class="timeline-title">500 santinhos → João Pereira (Centro)</div><div class="timeline-time">hoje 09:15</div></div></div>
+          <div class="timeline-item"><div class="timeline-dot timeline-line" style="background:var(--blue)"></div><div class="timeline-content"><div class="timeline-title">20 camisas → Equipe Vila Nova</div><div class="timeline-time">ontem 14:30</div></div></div>
+          <div class="timeline-item"><div class="timeline-dot timeline-line" style="background:var(--yellow)"></div><div class="timeline-content"><div class="timeline-title">200 adesivos → Comício Norte</div><div class="timeline-time">25/03 18:00</div></div></div>
+          <div class="timeline-item"><div class="timeline-dot" style="background:var(--red)"></div><div class="timeline-content"><div class="timeline-title">Alerta: bandeiras abaixo de 100 unidades</div><div class="timeline-time">sistema automático</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MAPA ===== -->
+    <div id="mod-mapa" class="module-section">
+      <div class="grid-2" style="margin-bottom:16px">
+        <div>
+          <div class="stats-grid" style="grid-template-columns:1fr 1fr">
+            <div class="stat-card"><div class="stat-label">Zonas Fortes</div><div class="stat-value" style="color:var(--green)">12</div></div>
+            <div class="stat-card"><div class="stat-label">Zonas Médias</div><div class="stat-value" style="color:var(--yellow)">8</div></div>
+            <div class="stat-card"><div class="stat-label">Zonas Fracas</div><div class="stat-value" style="color:var(--red)">5</div></div>
+            <div class="stat-card"><div class="stat-label">Sem cobertura</div><div class="stat-value" style="color:var(--text2)">3</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🗺️ Camadas do Mapa</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" checked> <span style="color:var(--green)">●</span> Base atual de apoiadores</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" checked> <span style="color:var(--blue)">●</span> Produção de rua (hoje)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox"> <span style="color:var(--purple)">●</span> Resultado eleitoral 2020</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox"> <span style="color:var(--yellow)">●</span> Densidade eleitoral</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox"> <span style="color:var(--orange)">●</span> Localização das equipes</label>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📍 Mapa de Calor — Bairros</div></div>
+        <div style="background:var(--bg3);border-radius:8px;padding:20px;text-align:center;color:var(--text2);margin-bottom:12px">
+          <div style="font-size:48px;margin-bottom:8px">🗺️</div>
+          <div style="font-size:13px;margin-bottom:4px">Mapa GIS Interativo</div>
+          <div style="font-size:11px">Integrado com Google Maps / OpenStreetMap</div>
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+            <button class="btn">Centro</button>
+            <button class="btn">Vila Nova</button>
+            <button class="btn">Norte</button>
+            <button class="btn">Sul</button>
+            <button class="btn btn-primary">Ver Mapa Completo</button>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div style="background:var(--green-bg);border:1px solid var(--green);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:11px;color:var(--green);font-weight:600">ZONA FORTE</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin:4px 0">Centro</div>
+            <div style="font-size:11px;color:var(--text2)">834 apoiadores · 90% cobertura</div>
+          </div>
+          <div style="background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:11px;color:var(--yellow);font-weight:600">ZONA MÉDIA</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin:4px 0">Vila Nova</div>
+            <div style="font-size:11px;color:var(--text2)">692 apoiadores · 65% cobertura</div>
+          </div>
+          <div style="background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:11px;color:var(--red);font-weight:600">ZONA FRACA</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin:4px 0">Jardim Sul</div>
+            <div style="font-size:11px;color:var(--text2)">349 apoiadores · 38% cobertura</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BI ===== -->
+    <div id="mod-bi" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Projeção Final</div><div class="stat-value" style="color:var(--green)">5.940</div><div class="stat-change stat-up">▲ 72% da meta</div></div>
+        <div class="stat-card"><div class="stat-label">Taxa de Conversão</div><div class="stat-value">38%</div><div class="stat-change stat-up">▲ +4% vs semana</div></div>
+        <div class="stat-card"><div class="stat-label">Engajamento Médio</div><div class="stat-value">7.4</div><div class="stat-change stat-neutral">escala 0–10</div></div>
+        <div class="stat-card"><div class="stat-label">Crescimento/dia</div><div class="stat-value">+106</div><div class="stat-change stat-up">▲ tendência positiva</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📈 Curva de Crescimento — 30 dias</div></div>
+          <div style="display:flex;align-items:flex-end;gap:2px;height:120px;padding:8px 0 4px">
+            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:22%"></div>
+            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:28%"></div>
+            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:30%"></div>
+            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:35%"></div>
+            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:38%"></div>
+            <div style="flex:1;background:var(--blue);border-radius:2px 2px 0 0;height:42%"></div>
+            <div style="flex:1;background:var(--blue);border-radius:2px 2px 0 0;height:48%"></div>
+            <div style="flex:1;background:var(--blue);border-radius:2px 2px 0 0;height:52%"></div>
+            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:58%"></div>
+            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:62%"></div>
+            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:67%"></div>
+            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:72%"></div>
+            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:80%"></div>
+            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:86%"></div>
+            <div style="flex:1;background:var(--yellow);border-radius:2px 2px 0 0;height:92%"></div>
+            <div style="flex:1;background:var(--yellow);border-radius:2px 2px 0 0;height:97%"></div>
+            <div style="flex:1;background:var(--yellow);border-radius:2px 2px 0 0;height:100%"></div>
+            <div style="flex:1;background:var(--border);border-radius:2px 2px 0 0;height:40%;opacity:0.4"></div>
+          </div>
+          <div class="metric-row"><div class="metric-key">Início da campanha</div><div class="metric-val">1.240 eleitores</div></div>
+          <div class="metric-row"><div class="metric-key">Hoje</div><div class="metric-val" style="color:var(--green)">2.413 eleitores</div></div>
+          <div class="metric-row"><div class="metric-key">Projeção dia da eleição</div><div class="metric-val" style="color:var(--yellow)">5.940 eleitores</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎯 Comparativo com 2020</div></div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Votos por zona (2020 vs 2026 projetado)</div>
+            <div style="margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px"><span>Centro</span><span>834 / 700</span></div>
+              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:84%;background:linear-gradient(90deg,var(--green) 84%,transparent 84%)"></div>
+              </div>
+            </div>
+            <div style="margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px"><span>Vila Nova</span><span>692 / 560</span></div>
+              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:69%;background:linear-gradient(90deg,var(--blue) 69%,transparent 69%)"></div>
+              </div>
+            </div>
+            <div style="margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px"><span>Jardim Sul</span><span>349 / 480</span></div>
+              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:35%;background:linear-gradient(90deg,var(--red) 35%,transparent 35%)"></div>
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-yellow" style="margin:0"><div><div class="alert-title">⚠️ Jardim Sul abaixo de 2020</div>Requer ação imediata para recuperar performance.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== COMUNICAÇÃO ===== -->
+    <div id="mod-comunicacao" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Mensagens Enviadas</div><div class="stat-value">12.840</div><div class="stat-change stat-up">▲ esta semana</div></div>
+        <div class="stat-card"><div class="stat-label">Taxa de Resposta</div><div class="stat-value">41%</div><div class="stat-change stat-up">▲ +7% vs semana</div></div>
+        <div class="stat-card"><div class="stat-label">Conversão em Apoio</div><div class="stat-value">18%</div><div class="stat-change stat-neutral">das respostas</div></div>
+        <div class="stat-card"><div class="stat-label">Grupos Ativos</div><div class="stat-value">34</div><div class="stat-change stat-neutral">WhatsApp</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📲 Novo Disparo</div></div>
+          <div class="form-group">
+            <label class="form-label">Segmento</label>
+            <select class="form-input">
+              <option>Todos os indecisos</option>
+              <option>Jovens (18–30 anos)</option>
+              <option>Evangélicos</option>
+              <option>Servidores públicos</option>
+              <option>Bairro Centro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mensagem</label>
+            <textarea class="form-input" rows="3" style="resize:vertical">Olá {nome}! Dr. Carlos Mendes quer sua força para transformar nossa cidade. Conte com seu apoio no dia 6! 🗳️</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Agendamento</label>
+            <input type="datetime-local" class="form-input">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn">👁 Pré-visualizar</button>
+            <button class="btn btn-primary" style="flex:1">📤 Enviar Agora (1.240 pessoas)</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Últimas Campanhas</div></div>
+          <table style="width:100%;font-size:12px">
+            <thead><tr><th>Campanha</th><th>Enviado</th><th>Resposta</th><th>Conv.</th></tr></thead>
+            <tbody>
+              <tr><td>Evangélicos Sul</td><td>820</td><td><span style="color:var(--green)">52%</span></td><td>22%</td></tr>
+              <tr><td>Indecisos Centro</td><td>440</td><td><span style="color:var(--blue)">38%</span></td><td>15%</td></tr>
+              <tr><td>Jovens Norte</td><td>630</td><td><span style="color:var(--yellow)">29%</span></td><td>11%</td></tr>
+              <tr><td>Servidores</td><td>290</td><td><span style="color:var(--green)">61%</span></td><td>28%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== AGENDA ===== -->
+    <div id="mod-agenda" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Eventos Este Mês</div><div class="stat-value">18</div><div class="stat-change stat-up">5 esta semana</div></div>
+        <div class="stat-card"><div class="stat-label">Público Total</div><div class="stat-value">4.280</div><div class="stat-change stat-up">▲ +12% vs meta</div></div>
+        <div class="stat-card"><div class="stat-label">Próximo Evento</div><div class="stat-value" style="font-size:14px">Amanhã</div><div class="stat-change stat-neutral">Caminhada Norte</div></div>
+        <div class="stat-card"><div class="stat-label">Taxa de Presença</div><div class="stat-value">84%</div><div class="stat-change stat-up">▲ esperado vs real</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📅 Agenda de Eventos</div><button class="btn btn-primary">+ Novo Evento</button></div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Evento</th><th>Data</th><th>Local</th><th>Tipo</th><th>Esperado</th><th>Real</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Caminhada Norte</strong></td><td>27/03 08:00</td><td>Av. Principal Norte</td><td><span class="badge badge-blue">Caminhada</span></td><td>300</td><td>—</td><td><span class="badge badge-yellow">Amanhã</span></td></tr>
+              <tr><td><strong>Reunião Líderes</strong></td><td>28/03 19:00</td><td>Comitê Central</td><td><span class="badge badge-purple">Reunião</span></td><td>50</td><td>—</td><td><span class="badge badge-yellow">Em breve</span></td></tr>
+              <tr><td><strong>Comício Centro</strong></td><td>24/03 18:00</td><td>Praça da República</td><td><span class="badge badge-orange">Comício</span></td><td>800</td><td>920</td><td><span class="badge badge-green">Concluído</span></td></tr>
+              <tr><td><strong>Visita Escolas</strong></td><td>22/03 09:00</td><td>3 escolas municipais</td><td><span class="badge badge-green">Visita</span></td><td>200</td><td>195</td><td><span class="badge badge-green">Concluído</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FINANCEIRO ===== -->
+    <div id="mod-financeiro" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Receita Total</div><div class="stat-value" style="color:var(--green)">R$ 84.200</div><div class="stat-change stat-up">▲ arrecadação</div></div>
+        <div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">R$ 52.480</div><div class="stat-change stat-neutral">62% do orçamento</div></div>
+        <div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:var(--yellow)">R$ 31.720</div><div class="stat-change stat-neutral">disponível</div></div>
+        <div class="stat-card"><div class="stat-label">Custo/Voto</div><div class="stat-value">R$ 8,82</div><div class="stat-change stat-up">▲ eficiente</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">💸 Gastos por Categoria</div></div>
+          <div class="rank-item">
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--blue);flex-shrink:0"></div>
+            <div class="rank-bar-wrap"><div class="person-name">Material gráfico</div><div class="rank-bar"><div class="rank-fill" style="width:72%;background:var(--blue)"></div></div></div>
+            <div class="rank-pts">R$ 18.400</div>
+          </div>
+          <div class="rank-item">
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--green);flex-shrink:0"></div>
+            <div class="rank-bar-wrap"><div class="person-name">Logística / Combustível</div><div class="rank-bar"><div class="rank-fill" style="width:45%;background:var(--green)"></div></div></div>
+            <div class="rank-pts">R$ 11.200</div>
+          </div>
+          <div class="rank-item">
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--yellow);flex-shrink:0"></div>
+            <div class="rank-bar-wrap"><div class="person-name">Eventos e Comícios</div><div class="rank-bar"><div class="rank-fill" style="width:38%;background:var(--yellow)"></div></div></div>
+            <div class="rank-pts">R$ 9.600</div>
+          </div>
+          <div class="rank-item">
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--purple);flex-shrink:0"></div>
+            <div class="rank-bar-wrap"><div class="person-name">Comunicação / Mídias</div><div class="rank-bar"><div class="rank-fill" style="width:30%;background:var(--purple)"></div></div></div>
+            <div class="rank-pts">R$ 7.600</div>
+          </div>
+          <div class="rank-item">
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--orange);flex-shrink:0"></div>
+            <div class="rank-bar-wrap"><div class="person-name">Alimentação Equipes</div><div class="rank-bar"><div class="rank-fill" style="width:22%;background:var(--orange)"></div></div></div>
+            <div class="rank-pts">R$ 5.680</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 Lançamentos Recentes</div><button class="btn btn-primary">+ Lançar</button></div>
+          <table style="width:100%;font-size:12px">
+            <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead>
+            <tbody>
+              <tr><td>26/03</td><td>Combustível Sprinter</td><td><span class="badge badge-red">Saída</span></td><td style="color:var(--red)">-R$ 280</td></tr>
+              <tr><td>25/03</td><td>Doação — João R.</td><td><span class="badge badge-green">Entrada</span></td><td style="color:var(--green)">+R$ 2.000</td></tr>
+              <tr><td>25/03</td><td>Impressão santinhos</td><td><span class="badge badge-red">Saída</span></td><td style="color:var(--red)">-R$ 1.400</td></tr>
+              <tr><td>24/03</td><td>Sonorização comício</td><td><span class="badge badge-red">Saída</span></td><td style="color:var(--red)">-R$ 800</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GAMIFICAÇÃO ===== -->
+    <div id="mod-gamificacao" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Top Formiguinha</div><div class="stat-value" style="font-size:14px">Ana Lima</div><div class="stat-change stat-up">🥇 940 pts hoje</div></div>
+        <div class="stat-card"><div class="stat-label">Top Liderança</div><div class="stat-value" style="font-size:14px">João Pereira</div><div class="stat-change stat-up">🥇 1.200 votos</div></div>
+        <div class="stat-card"><div class="stat-label">Top Equipe</div><div class="stat-value" style="font-size:14px">Centro Norte</div><div class="stat-change stat-up">🥇 +392 semana</div></div>
+        <div class="stat-card"><div class="stat-label">Total de Pontos Trocados</div><div class="stat-value">84.200</div><div class="stat-change stat-neutral">acumulado</div></div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏆 Ranking Formiguinhas</div></div>
+          <div class="rank-item"><div class="rank-pos" style="color:var(--yellow);font-size:16px">🥇</div><div class="rank-bar-wrap"><div class="person-name">Ana Lima</div><div class="person-sub" style="font-size:11px;color:var(--text2)">127 cadastros · 56 conv.</div><div class="rank-bar"><div class="rank-fill" style="width:100%;background:var(--yellow)"></div></div></div><div class="rank-pts" style="color:var(--yellow)">3.840</div></div>
+          <div class="rank-item"><div class="rank-pos" style="font-size:16px">🥈</div><div class="rank-bar-wrap"><div class="person-name">Carlos Souza</div><div class="person-sub" style="font-size:11px;color:var(--text2)">108 cadastros · 44 conv.</div><div class="rank-bar"><div class="rank-fill" style="width:80%;background:var(--blue)"></div></div></div><div class="rank-pts">3.120</div></div>
+          <div class="rank-item"><div class="rank-pos" style="font-size:16px">🥉</div><div class="rank-bar-wrap"><div class="person-name">Pedro Oliveira</div><div class="person-sub" style="font-size:11px;color:var(--text2)">94 cadastros · 38 conv.</div><div class="rank-bar"><div class="rank-fill" style="width:65%;background:var(--orange)"></div></div></div><div class="rank-pts">2.740</div></div>
+          <div class="rank-item"><div class="rank-pos">4</div><div class="rank-bar-wrap"><div class="person-name">Marcos Dias</div><div class="rank-bar"><div class="rank-fill" style="width:50%;background:var(--green)"></div></div></div><div class="rank-pts">2.100</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎯 Sistema de Pontos</div></div>
+          <div class="metric-row"><div class="metric-key">🟢 Cadastro confirmado</div><div class="metric-val" style="color:var(--green)">+30 pts</div></div>
+          <div class="metric-row"><div class="metric-key">🟡 Cadastro simpatizante</div><div class="metric-val" style="color:var(--yellow)">+15 pts</div></div>
+          <div class="metric-row"><div class="metric-key">📅 Participação evento</div><div class="metric-val" style="color:var(--blue)">+20 pts</div></div>
+          <div class="metric-row"><div class="metric-key">📸 Foto em campo</div><div class="metric-val" style="color:var(--purple)">+5 pts</div></div>
+          <div class="metric-row"><div class="metric-key">🎯 Meta diária batida</div><div class="metric-val" style="color:var(--orange)">+50 pts</div></div>
+          <div class="metric-row"><div class="metric-key">🏆 Meta semanal batida</div><div class="metric-val" style="color:var(--yellow)">+200 pts</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏅 Conquistas</div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <div style="background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:8px;padding:8px 10px;text-align:center;flex:1;min-width:80px">
+              <div style="font-size:20px">🔥</div><div style="font-size:11px;color:var(--yellow);font-weight:600">Sequência 7d</div>
+            </div>
+            <div style="background:var(--green-bg);border:1px solid var(--green);border-radius:8px;padding:8px 10px;text-align:center;flex:1;min-width:80px">
+              <div style="font-size:20px">💯</div><div style="font-size:11px;color:var(--green);font-weight:600">100 cadastros</div>
+            </div>
+            <div style="background:var(--blue-bg);border:1px solid var(--blue);border-radius:8px;padding:8px 10px;text-align:center;flex:1;min-width:80px">
+              <div style="font-size:20px">⭐</div><div style="font-size:11px;color:var(--blue);font-weight:600">Top do mês</div>
+            </div>
+            <div style="background:var(--border);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center;flex:1;min-width:80px;opacity:0.4">
+              <div style="font-size:20px">🚀</div><div style="font-size:11px;color:var(--text2);font-weight:600">500 cadastros</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SEGURANÇA ===== -->
+    <div id="mod-seguranca" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Usuários Ativos</div><div class="stat-value">169</div><div class="stat-change stat-up">logados hoje</div></div>
+        <div class="stat-card"><div class="stat-label">Último Backup</div><div class="stat-value" style="font-size:14px">há 2h</div><div class="stat-change stat-green stat-up">✅ automático</div></div>
+        <div class="stat-card"><div class="stat-label">Tentativas Bloqueadas</div><div class="stat-value">3</div><div class="stat-change stat-neutral">esta semana</div></div>
+        <div class="stat-card"><div class="stat-label">Criptografia</div><div class="stat-value" style="font-size:14px">AES-256</div><div class="stat-change stat-up">✅ ativa</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">👤 Níveis de Acesso</div><button class="btn btn-primary">+ Usuário</button></div>
+          <table style="width:100%;font-size:12px">
+            <thead><tr><th>Perfil</th><th>Usuários</th><th>Permissões</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-purple">Admin</span></td><td>3</td><td>Acesso total</td></tr>
+              <tr><td><span class="badge badge-blue">Coordenador</span></td><td>8</td><td>Todos módulos, sem financeiro</td></tr>
+              <tr><td><span class="badge badge-green">Líder</span></td><td>34</td><td>CRM, Rua, Agenda</td></tr>
+              <tr><td><span class="badge badge-gray">Formiguinha</span></td><td>127</td><td>App móvel apenas</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 Log de Atividades</div></div>
+          <div class="timeline-item"><div class="timeline-dot timeline-line" style="background:var(--green)"></div><div class="timeline-content"><div class="timeline-title">admin@campanha — login</div><div class="timeline-time">26/03 08:14 · IP 192.168.1.10</div></div></div>
+          <div class="timeline-item"><div class="timeline-dot timeline-line" style="background:var(--blue)"></div><div class="timeline-content"><div class="timeline-title">Backup automático — concluído</div><div class="timeline-time">26/03 06:00 · 2.4GB exportados</div></div></div>
+          <div class="timeline-item"><div class="timeline-dot timeline-line" style="background:var(--red)"></div><div class="timeline-content"><div class="timeline-title">Acesso bloqueado — senha errada (3x)</div><div class="timeline-time">25/03 23:42 · IP 45.12.87.201</div></div></div>
+          <div class="timeline-item"><div class="timeline-dot" style="background:var(--yellow)"></div><div class="timeline-content"><div class="timeline-title">Exportação de dados — Carlos M.</div><div class="timeline-time">25/03 14:30 · relatório PDF</div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODAL NOVO ELEITOR -->
+<div class="modal-overlay" id="modal-eleitor">
+  <div class="modal">
+    <div class="modal-title">👤 Cadastrar Novo Eleitor</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nome completo</label><input type="text" class="form-input" placeholder="Maria da Silva"></div>
+      <div class="form-group"><label class="form-label">Telefone / WhatsApp</label><input type="text" class="form-input" placeholder="(69) 99999-0000"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Bairro</label><select class="form-input"><option>Centro</option><option>Vila Nova</option><option>Jardim Sul</option><option>Nova Esperança</option></select></div>
+      <div class="form-group"><label class="form-label">Idade</label><input type="number" class="form-input" placeholder="35"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Profissão</label><input type="text" class="form-input" placeholder="Professora"></div>
+      <div class="form-group"><label class="form-label">Classificação</label><select class="form-input"><option>✅ Confirmado</option><option>🟡 Simpatizante</option><option>⚪ Indeciso</option><option>🔴 Oposição</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" rows="2" placeholder="Indicado por João Pereira, evangélico..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('modal-eleitor').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEleitor()">💾 Salvar Eleitor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modules = {
+    dashboard: 'Dashboard Geral',
+    crm: 'CRM — Base de Eleitores',
+    liderancas: 'Lideranças',
+    rua: 'Operação de Rua',
+    logistica: 'Logística — Carros e Rotas',
+    materiais: 'Materiais de Campanha',
+    mapa: 'Mapa Eleitoral',
+    bi: 'Inteligência Eleitoral (BI)',
+    comunicacao: 'Comunicação e Disparos',
+    agenda: 'Agenda e Eventos',
+    financeiro: 'Financeiro',
+    gamificacao: 'Gamificação',
+    seguranca: 'Segurança e Controle',
+  };
+
+  function showModule(id, el) {
+    document.querySelectorAll('.module-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('mod-' + id).classList.add('active');
+    el.classList.add('active');
+    document.getElementById('page-title').textContent = modules[id] || id;
+  }
+
+  function animateCounter(id, target, duration) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target).toLocaleString('pt-BR');
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  function saveEleitor() {
+    document.getElementById('modal-eleitor').classList.remove('open');
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#238636;color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;z-index:200;animation:fadeIn 0.3s';
+    overlay.textContent = '✅ Eleitor cadastrado com sucesso!';
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 3000);
+  }
+
+  // Tab clicks
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      this.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // Close modal clicking outside
+  document.getElementById('modal-eleitor').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+
+  // Animate counters on load
+  window.addEventListener('load', () => {
+    animateCounter('counter-eleitores', 2413, 1500);
+    animateCounter('counter-confirmados', 1480, 1800);
+    animateCounter('counter-votos', 5940, 2000);
+  });
+</script>
+</body>
+</html>
