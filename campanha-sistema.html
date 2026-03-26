@@ -1855,7 +1855,7 @@
     }
     // Toggle contenteditable on all stat-value elements
     document.querySelectorAll('.stat-value').forEach((el, i) => {
-      el.contentEditable = editMode ? 'true' : 'false';
+      el.setAttribute('contenteditable', editMode ? 'true' : 'false');
       if (!el.dataset.key) el.dataset.key = 'stat_' + i;
     });
   }
@@ -2465,11 +2465,11 @@
 
   function exportRaioXCSV() {
     const {rowsBairro, rowsMuni} = _rxBuildRows();
-    const esc = v => `"${String(v).replace(/"/g,'""')}"`;
-    const headerB = ['#','Bairro','Votos','Share %','Var. vs Anterior'].map(esc).join(',');
-    const csvB = [headerB, ...rowsBairro.map(r=>r.map(esc).join(','))].join('\n');
-    const headerM = ['#','Município','Votos','Share %','Var. vs Anterior','Prefeito Eleito','Partido','Votos Prefeito'].map(esc).join(',');
-    const csvM = [headerM, ...rowsMuni.map(r=>r.map(esc).join(','))].join('\n');
+    const csvEscape = v => `"${String(v).replace(/"/g,'""')}"`;
+    const headerB = ['#','Bairro','Votos','Share %','Var. vs Anterior'].map(csvEscape).join(',');
+    const csvB = [headerB, ...rowsBairro.map(r=>r.map(csvEscape).join(','))].join('\n');
+    const headerM = ['#','Município','Votos','Share %','Var. vs Anterior','Prefeito Eleito','Partido','Votos Prefeito'].map(csvEscape).join(',');
+    const csvM = [headerM, ...rowsMuni.map(r=>r.map(csvEscape).join(','))].join('\n');
     const full = `Raio X Eleitoral — ${rxTipo} ${rxAno}
 
 === POR BAIRRO ===
