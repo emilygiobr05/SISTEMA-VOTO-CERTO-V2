@@ -310,6 +310,9 @@
     <div class="nav-item" onclick="showModule('dados', this)">
       <span class="nav-icon">📂</span> Dados & Import
     </div>
+    <div class="nav-item" onclick="showModule('raiox', this)">
+      <span class="nav-icon">☢️</span> Raio X Eleitoral
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -1391,6 +1394,134 @@
       </div>
     </div>
 
+
+    <!-- ===== RAIO X ELEITORAL ===== -->
+    <div id="mod-raiox" class="module-section">
+      <!-- Controls -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text2);font-weight:600">Tipo:</span>
+        <div class="tabs" style="border:none;margin:0" id="rx-tipo-tabs">
+          <div class="tab active" onclick="switchRxTipo('municipal',this)">🏛️ Municipal</div>
+          <div class="tab" onclick="switchRxTipo('estadual',this)">🗺️ Estadual</div>
+        </div>
+        <span style="font-size:12px;color:var(--text2);font-weight:600">Ano:</span>
+        <div class="tabs" style="border:none;margin:0" id="rx-ano-tabs">
+          <div class="tab active" onclick="switchRxAno('2024',this)">2024</div>
+          <div class="tab" onclick="switchRxAno('2022',this)">2022</div>
+          <div class="tab" onclick="switchRxAno('2020',this)">2020</div>
+          <div class="tab" onclick="switchRxAno('2018',this)">2018</div>
+          <div class="tab" onclick="switchRxAno('2016',this)">2016</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn" onclick="exportRaioXCSV()">⬇ CSV</button>
+          <button class="btn btn-primary" onclick="exportRaioXExcel()">📊 Exportar Excel</button>
+        </div>
+      </div>
+
+      <!-- KPI cards -->
+      <div class="stats-grid" style="margin-bottom:16px" id="rx-kpis">
+        <div class="stat-card"><div class="stat-label">1º Lugar</div><div class="stat-value" id="rx-kpi-1" style="color:var(--green);font-size:15px">—</div><div class="stat-change stat-neutral" id="rx-kpi-1b">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total de Votos</div><div class="stat-value" id="rx-kpi-total" style="color:var(--blue)">—</div><div class="stat-change stat-neutral" id="rx-kpi-totalb">—</div></div>
+        <div class="stat-card"><div class="stat-label">Maior Crescimento vs Anterior</div><div class="stat-value" id="rx-kpi-up" style="color:var(--green);font-size:15px">—</div><div class="stat-change stat-up" id="rx-kpi-upb">—</div></div>
+        <div class="stat-card"><div class="stat-label">Maior Queda vs Anterior</div><div class="stat-value" id="rx-kpi-down" style="color:var(--red);font-size:15px">—</div><div class="stat-change stat-down" id="rx-kpi-downb">—</div></div>
+      </div>
+
+      <!-- Tabs: Bairro / Município -->
+      <div class="tabs" id="rx-visao-tabs" style="margin-bottom:16px">
+        <div class="tab active" onclick="switchRxVisao('bairro',this)">📍 Por Bairro</div>
+        <div class="tab" onclick="switchRxVisao('municipio',this)">🏙️ Por Município</div>
+        <div class="tab" onclick="switchRxVisao('comparativo',this)">📊 Comparativo de Anos</div>
+      </div>
+
+      <!-- POR BAIRRO -->
+      <div id="rx-visao-bairro">
+        <div class="grid-2" style="margin-bottom:16px;align-items:start">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📍 Ranking de Votos por Bairro</div>
+              <input type="text" id="rx-bairro-search" class="topbar-search" style="width:160px" placeholder="🔍 Bairro..." oninput="renderRaioXBairro()">
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Bairro</th>
+                    <th>Votos</th>
+                    <th>Share %</th>
+                    <th>Var. vs Ant.</th>
+                    <th>Barra</th>
+                  </tr>
+                </thead>
+                <tbody id="rx-bairro-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 Distribuição Visual</div></div>
+            <div id="rx-bairro-chart"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POR MUNICÍPIO -->
+      <div id="rx-visao-municipio" style="display:none">
+        <div class="grid-2" style="margin-bottom:16px;align-items:start">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏙️ Ranking de Votos por Município</div>
+              <input type="text" id="rx-muni-search" class="topbar-search" style="width:160px" placeholder="🔍 Município..." oninput="renderRaioXMuni()">
+            </div>
+            <div class="table-container" style="max-height:500px;overflow-y:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Município</th>
+                    <th>Votos</th>
+                    <th>Share %</th>
+                    <th>Var. vs Ant.</th>
+                    <th>Prefeito Eleito</th>
+                    <th>Barra</th>
+                  </tr>
+                </thead>
+                <tbody id="rx-muni-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 Distribuição Visual</div></div>
+            <div id="rx-muni-chart"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPARATIVO DE ANOS -->
+      <div id="rx-visao-comparativo" style="display:none">
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📊 Evolução por Bairro — 3 Eleições</div>
+            </div>
+            <div id="rx-comp-bairro"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏙️ Evolução por Município — Top 10</div>
+            </div>
+            <div id="rx-comp-muni"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📈 Tendência de Crescimento Eleitoral</div>
+            <span style="font-size:11px;color:var(--text2)">Total de votos por eleição · Rondônia</span>
+          </div>
+          <div id="rx-tendencia"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -1435,6 +1566,7 @@
     historico: 'Histórico Eleitoral — Rondônia',
     seguranca: 'Segurança e Controle',
     dados: 'Dados & Importação',
+    raiox: 'Raio X Eleitoral',
   };
 
   function showModule(id, el) {
@@ -1449,6 +1581,9 @@
     }
     if (id === 'mapa') {
       renderMapaAll();
+    }
+    if (id === 'raiox') {
+      renderRaioX();
     }
   }
 
@@ -1954,6 +2089,401 @@
     renderRankList('hist-est-topmuni', munis, 'municipio', 'votos');
     const bairros = HIST_DATA.bairros_estaduais[String(histEstYear)] || [];
     renderRankList('hist-est-topbairro', bairros, 'bairro', 'votos');
+  }
+
+  // ========== RAIO X ELEITORAL ==========
+  let rxTipo    = 'municipal';   // 'municipal' | 'estadual'
+  let rxAno     = '2024';
+  let rxVisao   = 'bairro';      // 'bairro' | 'municipio' | 'comparativo'
+
+  function _rxGetData() {
+    // Returns { bairros, municipios, prevBairros, prevMunicipios, prefeitos }
+    const anoPrev = { '2024':'2020', '2022':'2018', '2020':'2016', '2018':'', '2016':'' };
+    const prev = anoPrev[rxAno] || null;
+
+    if (rxTipo === 'municipal') {
+      return {
+        bairros:       HIST_DATA.bairros_municipais[rxAno]    || [],
+        municipios:    HIST_DATA.municipios_municipais[rxAno]  || [],
+        prevBairros:   prev ? (HIST_DATA.bairros_municipais[prev]   || []) : [],
+        prevMunicipios:prev ? (HIST_DATA.municipios_municipais[prev] || []) : [],
+        prefeitos:     HIST_DATA.prefeitos[rxAno] || [],
+        label: 'Municipal'
+      };
+    } else {
+      return {
+        bairros:       HIST_DATA.bairros_estaduais[rxAno]    || [],
+        municipios:    HIST_DATA.municipios_estaduais[rxAno]  || [],
+        prevBairros:   prev ? (HIST_DATA.bairros_estaduais[prev]   || []) : [],
+        prevMunicipios:prev ? (HIST_DATA.municipios_estaduais[prev] || []) : [],
+        prefeitos:     [],
+        label: 'Estadual'
+      };
+    }
+  }
+
+  function switchRxTipo(tipo, el) {
+    rxTipo = tipo;
+    document.querySelectorAll('#rx-tipo-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    // Show/hide 2018/2022 tabs
+    document.querySelectorAll('#rx-ano-tabs .tab').forEach(t => {
+      const y = t.textContent.trim();
+      if (tipo === 'municipal') {
+        t.style.display = (y === '2022' || y === '2018') ? 'none' : '';
+      } else {
+        t.style.display = (y === '2024' || y === '2020' || y === '2016') ? 'none' : '';
+      }
+    });
+    if (tipo === 'municipal' && (rxAno === '2022' || rxAno === '2018')) {
+      rxAno = '2024';
+      document.querySelectorAll('#rx-ano-tabs .tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('#rx-ano-tabs .tab') && document.querySelector('#rx-ano-tabs .tab').classList.add('active');
+    } else if (tipo === 'estadual' && (rxAno === '2024' || rxAno === '2020' || rxAno === '2016')) {
+      rxAno = '2022';
+      document.querySelectorAll('#rx-ano-tabs .tab').forEach(t => t.classList.remove('active'));
+      const tab22 = [...document.querySelectorAll('#rx-ano-tabs .tab')].find(t => t.textContent.trim()==='2022');
+      if (tab22) tab22.classList.add('active');
+    }
+    renderRaioX();
+  }
+
+  function switchRxAno(ano, el) {
+    rxAno = ano;
+    document.querySelectorAll('#rx-ano-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderRaioX();
+  }
+
+  function switchRxVisao(visao, el) {
+    rxVisao = visao;
+    document.querySelectorAll('#rx-visao-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['bairro','municipio','comparativo'].forEach(v => {
+      const el2 = document.getElementById(`rx-visao-${v}`);
+      if (el2) el2.style.display = v === visao ? '' : 'none';
+    });
+    if (visao === 'bairro') renderRaioXBairro();
+    else if (visao === 'municipio') renderRaioXMuni();
+    else renderRaioXComp();
+  }
+
+  function _varBadge(pct) {
+    if (!isFinite(pct)) return '<span class="badge badge-gray">—</span>';
+    const abs = Math.abs(pct);
+    if (pct > 0) return `<span class="badge badge-green">▲ +${abs}%</span>`;
+    if (pct < 0) return `<span class="badge badge-red">▼ -${abs}%</span>`;
+    return '<span class="badge badge-gray">= 0%</span>';
+  }
+
+  function _inlineBar(pct, color) {
+    return `<div style="width:80px;height:8px;background:var(--border);border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle">
+      <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:4px"></div>
+    </div>`;
+  }
+
+  function renderRaioXBairro() {
+    const {bairros, prevBairros} = _rxGetData();
+    const total = bairros.reduce((s,b) => s + b.votos, 0);
+    const q = (document.getElementById('rx-bairro-search')?.value || '').toLowerCase();
+    const filtered = bairros.filter(b => !q || b.bairro.toLowerCase().includes(q));
+    const maxV = bairros[0]?.votos || 1;
+    const prevMap = {};
+    prevBairros.forEach(b => prevMap[b.bairro] = b.votos);
+    const colors = ['var(--green)','var(--blue)','var(--purple)','var(--yellow)','var(--orange)','var(--teal)','var(--red)'];
+
+    const tbody = document.getElementById('rx-bairro-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = filtered.map((b, i) => {
+      const share = ((b.votos / total) * 100).toFixed(1);
+      const prev = prevMap[b.bairro];
+      const varPct = prev ? Math.round(((b.votos - prev) / prev) * 100) : null;
+      const col = colors[i % colors.length];
+      const barPct = Math.round((b.votos / maxV) * 100);
+      return `<tr>
+        <td style="color:var(--text3);font-weight:700">${i+1}</td>
+        <td style="font-weight:500">${b.bairro}</td>
+        <td style="font-weight:700;color:${col}">${b.votos.toLocaleString('pt-BR')}</td>
+        <td><span class="badge badge-blue">${share}%</span></td>
+        <td>${varPct !== null ? _varBadge(varPct) : '<span class="badge badge-gray">—</span>'}</td>
+        <td>${_inlineBar(barPct, col)}</td>
+      </tr>`;
+    }).join('');
+
+    // Chart
+    const chart = document.getElementById('rx-bairro-chart');
+    if (chart) {
+      chart.innerHTML = filtered.slice(0, 15).map((b, i) => {
+        const pct = Math.round((b.votos / maxV) * 100);
+        const col = colors[i % colors.length];
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <div style="width:110px;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0" title="${b.bairro}">${b.bairro}</div>
+          <div style="flex:1;height:20px;background:var(--border);border-radius:3px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${col};border-radius:3px;transition:width 0.6s;display:flex;align-items:center;padding-left:6px">
+              <span style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap">${fmtVotos(b.votos)}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  function renderRaioXMuni() {
+    const {municipios, prevMunicipios, prefeitos} = _rxGetData();
+    const total = municipios.reduce((s,m) => s + m.votos, 0);
+    const q = (document.getElementById('rx-muni-search')?.value || '').toLowerCase();
+    const filtered = municipios.filter(m => !q || m.municipio.toLowerCase().includes(q));
+    const maxV = municipios[0]?.votos || 1;
+    const prevMap = {};
+    prevMunicipios.forEach(m => prevMap[m.municipio] = m.votos);
+    const prefMap = {};
+    prefeitos.forEach(p => prefMap[p.municipio] = p);
+    const colors = ['var(--green)','var(--blue)','var(--purple)','var(--yellow)','var(--orange)','var(--teal)','var(--red)'];
+
+    const tbody = document.getElementById('rx-muni-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = filtered.map((m, i) => {
+      const share = ((m.votos / total) * 100).toFixed(1);
+      const prev = prevMap[m.municipio];
+      const varPct = prev ? Math.round(((m.votos - prev) / prev) * 100) : null;
+      const col = colors[i % colors.length];
+      const barPct = Math.round((m.votos / maxV) * 100);
+      const pref = prefMap[m.municipio];
+      const prefCell = pref
+        ? `<span style="font-size:11px"><strong>${pref.candidato}</strong> <span class="badge" style="background:${getPartyColor(pref.partido)}22;color:${getPartyColor(pref.partido)};border:1px solid ${getPartyColor(pref.partido)}44">${pref.partido}</span></span>`
+        : '<span class="badge badge-gray">—</span>';
+      return `<tr>
+        <td style="color:var(--text3);font-weight:700">${i+1}</td>
+        <td style="font-weight:500;font-size:11px">${m.municipio}</td>
+        <td style="font-weight:700;color:${col}">${m.votos.toLocaleString('pt-BR')}</td>
+        <td><span class="badge badge-blue">${share}%</span></td>
+        <td>${varPct !== null ? _varBadge(varPct) : '<span class="badge badge-gray">—</span>'}</td>
+        <td style="font-size:11px">${prefCell}</td>
+        <td>${_inlineBar(barPct, col)}</td>
+      </tr>`;
+    }).join('');
+
+    const chart = document.getElementById('rx-muni-chart');
+    if (chart) {
+      chart.innerHTML = filtered.slice(0, 15).map((m, i) => {
+        const pct = Math.round((m.votos / maxV) * 100);
+        const col = colors[i % colors.length];
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <div style="width:110px;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0" title="${m.municipio}">${m.municipio}</div>
+          <div style="flex:1;height:20px;background:var(--border);border-radius:3px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${col};border-radius:3px;transition:width 0.6s;display:flex;align-items:center;padding-left:6px">
+              <span style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap">${fmtVotos(m.votos)}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  function renderRaioXKPIs() {
+    const {bairros, municipios, prevBairros, prevMunicipios} = _rxGetData();
+    const items = rxVisao === 'municipio' ? municipios : bairros;
+    const prevItems = rxVisao === 'municipio' ? prevMunicipios : prevBairros;
+    const key = rxVisao === 'municipio' ? 'municipio' : 'bairro';
+    const total = items.reduce((s,x) => s + x.votos, 0);
+    const prev = prevItems.reduce((s,x) => s + x.votos, 0);
+    const totalVar = prev ? Math.round(((total-prev)/prev)*100) : null;
+
+    const el1 = document.getElementById('rx-kpi-1');
+    const el1b = document.getElementById('rx-kpi-1b');
+    if (items[0]) { el1.textContent = items[0][key]; el1b.textContent = items[0].votos.toLocaleString('pt-BR') + ' votos'; }
+
+    const elT = document.getElementById('rx-kpi-total');
+    const elTb = document.getElementById('rx-kpi-totalb');
+    if (elT) { elT.textContent = fmtVotos(total); elTb.textContent = totalVar !== null ? `${totalVar >= 0 ? '▲ +' : '▼ '}${totalVar}% vs eleição anterior` : `${items.length} localidades`; }
+
+    // biggest growth
+    let best = null, bestPct = -Infinity, worst = null, worstPct = Infinity;
+    const prevMap = {};
+    prevItems.forEach(x => prevMap[x[key]] = x.votos);
+    items.forEach(x => {
+      const p = prevMap[x[key]];
+      if (!p) return;
+      const pct = Math.round(((x.votos - p) / p) * 100);
+      if (pct > bestPct) { bestPct = pct; best = x; }
+      if (pct < worstPct) { worstPct = pct; worst = x; }
+    });
+    const elU = document.getElementById('rx-kpi-up');
+    const elUb = document.getElementById('rx-kpi-upb');
+    if (best) { elU.textContent = best[key]; elUb.textContent = `+${bestPct}% vs eleição anterior`; }
+    else { elU.textContent = '—'; elUb.textContent = 'sem dados anteriores'; }
+
+    const elD = document.getElementById('rx-kpi-down');
+    const elDb = document.getElementById('rx-kpi-downb');
+    if (worst) { elD.textContent = worst[key]; elDb.textContent = `${worstPct}% vs eleição anterior`; }
+    else { elD.textContent = '—'; elDb.textContent = 'sem dados anteriores'; }
+  }
+
+  function renderRaioXComp() {
+    // Compare all available years for bairros and municipios
+    const anos = rxTipo === 'municipal' ? ['2016','2020','2024'] : ['2018','2022'];
+    const colAno = ['var(--purple)','var(--blue)','var(--green)','var(--yellow)'];
+
+    // Bairros comparativo
+    const allBairros = new Set();
+    anos.forEach(a => {
+      const data = rxTipo === 'municipal' ? HIST_DATA.bairros_municipais[a] : HIST_DATA.bairros_estaduais[a];
+      (data||[]).forEach(b => allBairros.add(b.bairro));
+    });
+    const bairroComp = document.getElementById('rx-comp-bairro');
+    if (bairroComp) {
+      const rows = [...allBairros].slice(0,12).map(nome => {
+        const vals = anos.map(a => {
+          const data = rxTipo === 'municipal' ? HIST_DATA.bairros_municipais[a] : HIST_DATA.bairros_estaduais[a];
+          return (data||[]).find(b => b.bairro === nome)?.votos || 0;
+        });
+        const maxV = Math.max(...vals) || 1;
+        return `<div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--text);font-weight:500;margin-bottom:4px">${nome}</div>
+          ${anos.map((a,i) => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <div style="width:32px;font-size:10px;color:${colAno[i]};font-weight:700">${a}</div>
+            <div style="flex:1;height:12px;background:var(--border);border-radius:2px;overflow:hidden">
+              <div style="width:${Math.round((vals[i]/maxV)*100)}%;height:100%;background:${colAno[i]};border-radius:2px"></div>
+            </div>
+            <div style="width:46px;font-size:10px;color:var(--text);text-align:right">${fmtVotos(vals[i])}</div>
+          </div>`).join('')}
+        </div>`;
+      }).join('');
+      bairroComp.innerHTML = rows || '<div style="color:var(--text2);padding:20px;text-align:center">Sem dados</div>';
+    }
+
+    // Municipios comparativo top 10
+    const allMunis = new Set();
+    anos.forEach(a => {
+      const data = rxTipo === 'municipal' ? HIST_DATA.municipios_municipais[a] : HIST_DATA.municipios_estaduais[a];
+      (data||[]).slice(0,10).forEach(m => allMunis.add(m.municipio));
+    });
+    const muniComp = document.getElementById('rx-comp-muni');
+    if (muniComp) {
+      const rows = [...allMunis].slice(0,10).map(nome => {
+        const vals = anos.map(a => {
+          const data = rxTipo === 'municipal' ? HIST_DATA.municipios_municipais[a] : HIST_DATA.municipios_estaduais[a];
+          return (data||[]).find(m => m.municipio === nome)?.votos || 0;
+        });
+        const maxV = Math.max(...vals) || 1;
+        return `<div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--text);font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${nome}">${nome}</div>
+          ${anos.map((a,i) => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <div style="width:32px;font-size:10px;color:${colAno[i]};font-weight:700">${a}</div>
+            <div style="flex:1;height:12px;background:var(--border);border-radius:2px;overflow:hidden">
+              <div style="width:${Math.round((vals[i]/maxV)*100)}%;height:100%;background:${colAno[i]};border-radius:2px"></div>
+            </div>
+            <div style="width:46px;font-size:10px;color:var(--text);text-align:right">${fmtVotos(vals[i])}</div>
+          </div>`).join('')}
+        </div>`;
+      }).join('');
+      muniComp.innerHTML = rows || '<div style="color:var(--text2);padding:20px;text-align:center">Sem dados</div>';
+    }
+
+    // Tendência geral
+    const tend = document.getElementById('rx-tendencia');
+    if (tend) {
+      const totais = anos.map(a => {
+        const data = rxTipo === 'municipal' ? HIST_DATA.municipios_municipais[a] : HIST_DATA.municipios_estaduais[a];
+        return {ano:a, total:(data||[]).reduce((s,m)=>s+m.votos,0)};
+      });
+      const maxT = Math.max(...totais.map(t=>t.total)) || 1;
+      tend.innerHTML = `
+        <div style="display:flex;align-items:flex-end;gap:16px;height:100px;padding:8px 0 4px">
+          ${totais.map((t,i) => {
+            const h = Math.round((t.total/maxT)*100);
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="font-size:11px;font-weight:700;color:${colAno[i]}">${fmtVotos(t.total)}</div>
+              <div style="width:100%;height:${h}px;background:${colAno[i]};border-radius:4px 4px 0 0;transition:height 0.8s;min-height:4px"></div>
+              <div style="font-size:11px;font-weight:700;color:var(--text2)">${t.ano}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="margin-top:10px;display:flex;gap:16px;flex-wrap:wrap">
+          ${totais.map((t,i) => `<div style="font-size:11px"><span style="color:${colAno[i]};font-weight:700">${t.ano}</span> — ${t.total.toLocaleString('pt-BR')} votos</div>`).join('')}
+        </div>`;
+    }
+  }
+
+  function renderRaioX() {
+    renderRaioXKPIs();
+    if (rxVisao === 'bairro') renderRaioXBairro();
+    else if (rxVisao === 'municipio') renderRaioXMuni();
+    else renderRaioXComp();
+  }
+
+  // ── EXPORT ──────────────────────────────────────────────────────────────────
+  function _rxBuildRows() {
+    const {bairros, municipios, prevBairros, prevMunicipios, prefeitos} = _rxGetData();
+    const totalB = bairros.reduce((s,b)=>s+b.votos,0);
+    const totalM = municipios.reduce((s,m)=>s+m.votos,0);
+    const prevBMap = {}; prevBairros.forEach(b=>prevBMap[b.bairro]=b.votos);
+    const prevMMap = {}; prevMunicipios.forEach(m=>prevMMap[m.municipio]=m.votos);
+    const prefMap = {}; prefeitos.forEach(p=>prefMap[p.municipio]=p);
+
+    const rowsBairro = bairros.map((b,i) => {
+      const prev = prevBMap[b.bairro];
+      const varPct = prev ? Math.round(((b.votos-prev)/prev)*100) : '';
+      return [i+1, b.bairro, b.votos, +((b.votos/totalB)*100).toFixed(1), varPct!==''?varPct+'%':''];
+    });
+    const rowsMuni = municipios.map((m,i) => {
+      const prev = prevMMap[m.municipio];
+      const varPct = prev ? Math.round(((m.votos-prev)/prev)*100) : '';
+      const pref = prefMap[m.municipio];
+      return [i+1, m.municipio, m.votos, +((m.votos/totalM)*100).toFixed(1), varPct!==''?varPct+'%':'', pref?.candidato||'', pref?.partido||'', pref?.votos||''];
+    });
+    return {rowsBairro, rowsMuni};
+  }
+
+  function exportRaioXExcel() {
+    if (typeof XLSX === 'undefined') {
+      showToast('⚠️ Biblioteca Excel não disponível. Recarregue a página ou verifique sua conexão.', '#e3b341');
+      return;
+    }
+    const {rowsBairro, rowsMuni} = _rxBuildRows();
+    const wb = XLSX.utils.book_new();
+
+    const wsBairro = XLSX.utils.aoa_to_sheet([
+      ['#','Bairro','Votos','Share %','Var. vs Anterior'],
+      ...rowsBairro
+    ]);
+    const colWidthsB = [4,30,14,10,14];
+    wsBairro['!cols'] = colWidthsB.map(wch=>({wch}));
+    XLSX.utils.book_append_sheet(wb, wsBairro, `Bairros ${rxAno}`);
+
+    const wsMuni = XLSX.utils.aoa_to_sheet([
+      ['#','Município','Votos','Share %','Var. vs Anterior','Prefeito Eleito','Partido','Votos Prefeito'],
+      ...rowsMuni
+    ]);
+    const colWidthsM = [4,28,14,10,14,28,12,14];
+    wsMuni['!cols'] = colWidthsM.map(wch=>({wch}));
+    XLSX.utils.book_append_sheet(wb, wsMuni, `Municípios ${rxAno}`);
+
+    XLSX.writeFile(wb, `raio-x-eleitoral-${rxTipo}-${rxAno}.xlsx`);
+    showToast(`📊 Exportado: raio-x-eleitoral-${rxTipo}-${rxAno}.xlsx`);
+  }
+
+  function exportRaioXCSV() {
+    const {rowsBairro, rowsMuni} = _rxBuildRows();
+    const esc = v => `"${String(v).replace(/"/g,'""')}"`;
+    const headerB = ['#','Bairro','Votos','Share %','Var. vs Anterior'].map(esc).join(',');
+    const csvB = [headerB, ...rowsBairro.map(r=>r.map(esc).join(','))].join('\n');
+    const headerM = ['#','Município','Votos','Share %','Var. vs Anterior','Prefeito Eleito','Partido','Votos Prefeito'].map(esc).join(',');
+    const csvM = [headerM, ...rowsMuni.map(r=>r.map(esc).join(','))].join('\n');
+    const full = `Raio X Eleitoral — ${rxTipo} ${rxAno}
+
+=== POR BAIRRO ===
+${csvB}
+
+=== POR MUNICIPIO ===
+${csvM}`;
+    const blob = new Blob(['\uFEFF'+full], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `raio-x-eleitoral-${rxTipo}-${rxAno}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast(`📄 CSV exportado: raio-x-eleitoral-${rxTipo}-${rxAno}.csv`);
   }
 
 </script>
