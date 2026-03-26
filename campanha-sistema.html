@@ -797,11 +797,18 @@
     <div id="mod-mapa" class="module-section">
       <!-- Year selector -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-        <span style="font-size:12px;color:var(--text2);font-weight:600">Eleição Municipal:</span>
+        <span style="font-size:12px;color:var(--text2);font-weight:600">Tipo:</span>
+        <div class="tabs" style="border:none;margin:0" id="mapa-tipo-tabs">
+          <div class="tab active" onclick="switchMapaTipo('municipal',this)">🏛️ Municipal</div>
+          <div class="tab" onclick="switchMapaTipo('estadual',this)">🗺️ Estadual</div>
+        </div>
+        <span style="font-size:12px;color:var(--text2);font-weight:600">Ano:</span>
         <div class="tabs" style="border:none;margin:0" id="mapa-year-tabs">
           <div class="tab active" onclick="switchMapaYear(2024,this)">2024</div>
           <div class="tab" onclick="switchMapaYear(2020,this)">2020</div>
           <div class="tab" onclick="switchMapaYear(2016,this)">2016</div>
+          <div class="tab" style="display:none" onclick="switchMapaYear(2022,this)">2022</div>
+          <div class="tab" style="display:none" onclick="switchMapaYear(2018,this)">2018</div>
         </div>
         <span style="margin-left:auto;font-size:11px;color:var(--text2)">Fonte: TSE · Rondônia — 52 municípios</span>
       </div>
@@ -818,7 +825,7 @@
           <div class="stat-change stat-neutral">seções eleitorais</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Partido Mais Eleito</div>
+          <div class="stat-label" id="mapa-partido-label">Partido Mais Eleito</div>
           <div class="stat-value" id="mapa-partido-vencedor" style="color:var(--green);font-size:16px">—</div>
           <div class="stat-change stat-neutral" id="mapa-partido-prefeitos">—</div>
         </div>
@@ -847,7 +854,7 @@
           </div>
           <div class="table-container" style="max-height:340px;overflow-y:auto">
             <table>
-              <thead><tr><th>#</th><th>Município</th><th>Prefeito Eleito</th><th>Partido</th><th>Votos</th><th class="edit-col">Ação</th></tr></thead>
+              <thead><tr><th>#</th><th id="mapa-col-local">Município</th><th id="mapa-col-cand">Prefeito Eleito</th><th>Partido</th><th>Votos</th><th id="mapa-col-status">Status</th><th class="edit-col">Ação</th></tr></thead>
               <tbody id="mapa-prefeitos-tbody"></tbody>
             </table>
           </div>
@@ -855,10 +862,17 @@
       </div>
       <!-- Row 2: Vereadores + Partidos Vencedores -->
       <div class="grid-2">
-        <div class="card">
+        <div class="card" id="mapa-card-vereadores">
           <div class="card-header">
-            <div class="card-title">🗳️ Vereadores por Partido — Porto Velho</div>
-            <span style="font-size:11px;color:var(--text2)">Câmara Municipal · RO</span>
+            <div class="card-title" id="mapa-vereadores-title">🗳️ Vereadores por Partido — Porto Velho</div>
+            <span style="font-size:11px;color:var(--text2)" id="mapa-vereadores-sub">Câmara Municipal · RO</span>
+          </div>
+          <div id="mapa-est-cargo-wrap" style="display:none;margin-bottom:10px">
+            <div class="tabs" style="border:none;margin:0" id="mapa-est-cargo-tabs">
+              <div class="tab active" onclick="switchMapaEstCargo('Senador',this)">Senador</div>
+              <div class="tab" onclick="switchMapaEstCargo('Deputado Federal',this)">Dep. Federal</div>
+              <div class="tab" onclick="switchMapaEstCargo('Deputado Estadual',this)">Dep. Estadual</div>
+            </div>
           </div>
           <div id="mapa-vereadores-chart"></div>
         </div>
@@ -873,63 +887,99 @@
 
     <!-- ===== BI ===== -->
     <div id="mod-bi" class="module-section">
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label">Projeção Final</div><div class="stat-value" style="color:var(--green)">5.940</div><div class="stat-change stat-up">▲ 72% da meta</div></div>
-        <div class="stat-card"><div class="stat-label">Taxa de Conversão</div><div class="stat-value">38%</div><div class="stat-change stat-up">▲ +4% vs semana</div></div>
-        <div class="stat-card"><div class="stat-label">Engajamento Médio</div><div class="stat-value">7.4</div><div class="stat-change stat-neutral">escala 0–10</div></div>
-        <div class="stat-card"><div class="stat-label">Crescimento/dia</div><div class="stat-value">+106</div><div class="stat-change stat-up">▲ tendência positiva</div></div>
+      <!-- BI KPI row (populated by renderBiAll) -->
+      <div class="stats-grid" id="bi-kpis" style="margin-bottom:16px">
+        <div class="stat-card"><div class="stat-label">Total Votos 2024</div><div class="stat-value" id="bi-kpi-1" style="color:var(--green)">—</div><div class="stat-change stat-neutral" id="bi-kpi-1b">eleições municipais</div></div>
+        <div class="stat-card"><div class="stat-label">Total Votos 2022</div><div class="stat-value" id="bi-kpi-2" style="color:var(--blue)">—</div><div class="stat-change stat-neutral" id="bi-kpi-2b">eleições estaduais</div></div>
+        <div class="stat-card"><div class="stat-label">Partido Dominante 2024</div><div class="stat-value" id="bi-kpi-3" style="color:var(--yellow);font-size:15px">—</div><div class="stat-change stat-neutral" id="bi-kpi-3b">mais prefeitos eleitos</div></div>
+        <div class="stat-card"><div class="stat-label">Candidato Mais Votado 2022</div><div class="stat-value" id="bi-kpi-4" style="color:var(--purple);font-size:13px">—</div><div class="stat-change stat-neutral" id="bi-kpi-4b">eleições estaduais</div></div>
       </div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-header"><div class="card-title">📈 Curva de Crescimento — 30 dias</div></div>
-          <div style="display:flex;align-items:flex-end;gap:2px;height:120px;padding:8px 0 4px">
-            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:22%"></div>
-            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:28%"></div>
-            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:30%"></div>
-            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:35%"></div>
-            <div style="flex:1;background:var(--blue-bg);border-radius:2px 2px 0 0;height:38%"></div>
-            <div style="flex:1;background:var(--blue);border-radius:2px 2px 0 0;height:42%"></div>
-            <div style="flex:1;background:var(--blue);border-radius:2px 2px 0 0;height:48%"></div>
-            <div style="flex:1;background:var(--blue);border-radius:2px 2px 0 0;height:52%"></div>
-            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:58%"></div>
-            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:62%"></div>
-            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:67%"></div>
-            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:72%"></div>
-            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:80%"></div>
-            <div style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:86%"></div>
-            <div style="flex:1;background:var(--yellow);border-radius:2px 2px 0 0;height:92%"></div>
-            <div style="flex:1;background:var(--yellow);border-radius:2px 2px 0 0;height:97%"></div>
-            <div style="flex:1;background:var(--yellow);border-radius:2px 2px 0 0;height:100%"></div>
-            <div style="flex:1;background:var(--border);border-radius:2px 2px 0 0;height:40%;opacity:0.4"></div>
+
+      <!-- BI Tab controls -->
+      <div class="tabs" id="bi-main-tabs" style="margin-bottom:16px">
+        <div class="tab active" onclick="switchBiTab('eleitoral',this)">🗳️ Análise Eleitoral</div>
+        <div class="tab" onclick="switchBiTab('partidos',this)">🎯 Partidos</div>
+        <div class="tab" onclick="switchBiTab('municipios',this)">🏙️ Municípios</div>
+        <div class="tab" onclick="switchBiTab('campanha',this)">📊 Campanha</div>
+      </div>
+
+      <!-- BI: ANÁLISE ELEITORAL -->
+      <div id="bi-section-eleitoral">
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📈 Evolução de Votos por Eleição — RO</div><span style="font-size:11px;color:var(--text2)">TSE · 2016–2024</span></div>
+            <div id="bi-evolucao-chart" style="padding:8px 0"></div>
           </div>
-          <div class="metric-row"><div class="metric-key">Início da campanha</div><div class="metric-val">1.240 eleitores</div></div>
-          <div class="metric-row"><div class="metric-key">Hoje</div><div class="metric-val" style="color:var(--green)">2.413 eleitores</div></div>
-          <div class="metric-row"><div class="metric-key">Projeção dia da eleição</div><div class="metric-val" style="color:var(--yellow)">5.940 eleitores</div></div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏆 Top 10 Candidatos Mais Votados — 2022</div><span style="font-size:11px;color:var(--text2)">Todos os cargos</span></div>
+            <div id="bi-top-cands"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🎯 Partidos por Votos — 2022 Estadual</div></div>
+            <div id="bi-partidos-2022"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏛️ Partidos por Prefeitos Eleitos — 2024</div></div>
+            <div id="bi-partidos-2024"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BI: PARTIDOS -->
+      <div id="bi-section-partidos" style="display:none">
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🎯 Força dos Partidos — Municipal 2016/2020/2024</div></div>
+            <div id="bi-partidos-muni-comp"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🗺️ Força dos Partidos — Estadual 2018/2022</div></div>
+            <div id="bi-partidos-est-comp"></div>
+          </div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">🎯 Comparativo com 2020</div></div>
-          <div style="margin-bottom:12px">
-            <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Votos por zona (2020 vs 2026 projetado)</div>
-            <div style="margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px"><span>Centro</span><span>834 / 700</span></div>
-              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
-                <div style="height:100%;width:84%;background:linear-gradient(90deg,var(--green) 84%,transparent 84%)"></div>
-              </div>
-            </div>
-            <div style="margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px"><span>Vila Nova</span><span>692 / 560</span></div>
-              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
-                <div style="height:100%;width:69%;background:linear-gradient(90deg,var(--blue) 69%,transparent 69%)"></div>
-              </div>
-            </div>
-            <div style="margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px"><span>Jardim Sul</span><span>349 / 480</span></div>
-              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
-                <div style="height:100%;width:35%;background:linear-gradient(90deg,var(--red) 35%,transparent 35%)"></div>
-              </div>
-            </div>
+          <div class="card-header"><div class="card-title">📊 Distribuição Detalhada de Partidos — 2024</div></div>
+          <div id="bi-partidos-detail"></div>
+        </div>
+      </div>
+
+      <!-- BI: MUNICÍPIOS -->
+      <div id="bi-section-municipios" style="display:none">
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏙️ Top 15 Municípios por Votos — 2024</div></div>
+            <div id="bi-muni-2024"></div>
           </div>
-          <div class="alert alert-yellow" style="margin:0"><div><div class="alert-title">⚠️ Jardim Sul abaixo de 2020</div>Requer ação imediata para recuperar performance.</div></div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏙️ Top 15 Municípios por Votos — 2022</div></div>
+            <div id="bi-muni-2022"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📍 Top Bairros por Votos — Comparativo 2016/2020/2024</div></div>
+          <div id="bi-bairros-comp"></div>
+        </div>
+      </div>
+
+      <!-- BI: CAMPANHA -->
+      <div id="bi-section-campanha" style="display:none">
+        <div class="stats-grid" style="margin-bottom:16px">
+          <div class="stat-card"><div class="stat-label">Eleitores Cadastrados</div><div class="stat-value" style="color:var(--green)" id="bi-camp-eleitores">—</div><div class="stat-change stat-up">▲ base ativa</div></div>
+          <div class="stat-card"><div class="stat-label">Meta de Votos</div><div class="stat-value" style="color:var(--blue)">5.000</div><div class="stat-change stat-neutral">projeção atual</div></div>
+          <div class="stat-card"><div class="stat-label">Municípios Ativos</div><div class="stat-value" style="color:var(--purple)">52</div><div class="stat-change stat-neutral">Rondônia — RO</div></div>
+          <div class="stat-card"><div class="stat-label">Dias p/ Eleição</div><div class="stat-value" id="bi-dias-eleicao" style="color:var(--yellow)">—</div><div class="stat-change stat-neutral">04/10/2026</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 Comparativo Desempenho por Bairro</div><span style="font-size:11px;color:var(--text2)">2020 vs 2024 (votos totais)</span></div>
+            <div id="bi-camp-bairro-comp"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🎯 Municípios — Crescimento 2020→2024</div></div>
+            <div id="bi-camp-muni-growth"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1164,6 +1214,7 @@
       <div class="tabs" id="hist-main-tabs">
         <div class="tab active" onclick="switchHistTab('municipal', this)">🏛️ Eleições Municipais (Prefeitos)</div>
         <div class="tab" onclick="switchHistTab('estadual', this)">🗺️ Eleições Estaduais (Dep./Senador)</div>
+        <div class="tab" onclick="switchHistTab('timeline', this)">📋 Linha do Tempo</div>
       </div>
 
       <!-- MUNICIPAL -->
@@ -1186,7 +1237,7 @@
             </div>
             <div class="table-container" style="max-height:380px;overflow-y:auto">
               <table>
-                <thead><tr><th>#</th><th>Município</th><th>Prefeito Eleito</th><th>Partido</th><th>Votos</th></tr></thead>
+                <thead><tr><th>#</th><th>Cargo</th><th>Ano</th><th>Município</th><th>Candidato</th><th>Partido</th><th>Votos</th><th>Status</th></tr></thead>
                 <tbody id="hist-muni-tbody"></tbody>
               </table>
             </div>
@@ -1249,6 +1300,50 @@
           <div class="card">
             <div class="card-header"><div class="card-title">📍 Top Bairros por Votação</div></div>
             <div id="hist-est-topbairro"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINHA DO TEMPO -->
+      <div id="hist-timeline" class="hist-section" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text2)">Cargo:</span>
+          <div class="tabs" style="border:none;margin:0" id="hist-tl-cargo-tabs">
+            <div class="tab active" onclick="switchTimelineCargo('todos',this)">Todos</div>
+            <div class="tab" onclick="switchTimelineCargo('Prefeito',this)">Prefeito</div>
+            <div class="tab" onclick="switchTimelineCargo('Senador',this)">Senador</div>
+            <div class="tab" onclick="switchTimelineCargo('Deputado Federal',this)">Dep. Federal</div>
+            <div class="tab" onclick="switchTimelineCargo('Deputado Estadual',this)">Dep. Estadual</div>
+          </div>
+          <span style="font-size:12px;color:var(--text2)">Status:</span>
+          <div class="tabs" style="border:none;margin:0" id="hist-tl-status-tabs">
+            <div class="tab active" onclick="switchTimelineStatus('todos',this)">Todos</div>
+            <div class="tab" onclick="switchTimelineStatus('ELEITO',this)">✅ Eleitos</div>
+            <div class="tab" onclick="switchTimelineStatus('NÃO ELEITO',this)">❌ Não Eleitos</div>
+          </div>
+          <input type="text" id="hist-tl-search" class="topbar-search" style="width:200px;margin-left:auto" placeholder="🔍 Candidato / partido..." oninput="renderTimeline()">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Histórico Completo — Todos os Cargos e Eleições</div>
+            <span id="hist-tl-count" class="badge badge-blue">0 registros</span>
+          </div>
+          <div class="table-container" style="max-height:500px;overflow-y:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Ano</th>
+                  <th>Cargo</th>
+                  <th>Candidato</th>
+                  <th>Partido</th>
+                  <th>Votos</th>
+                  <th>Status</th>
+                  <th>Município / Região</th>
+                </tr>
+              </thead>
+              <tbody id="hist-tl-tbody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1578,6 +1673,10 @@
     if (id === 'historico') {
       renderMuniAll();
       renderEstAll();
+      renderTimeline();
+    }
+    if (id === 'bi') {
+      renderBiAll();
     }
     if (id === 'mapa') {
       renderMapaAll();
@@ -1678,8 +1777,9 @@
   }
 
   function renderMuniTable() {
+    const yr = String(histMuniYear);
     const search = (document.getElementById('hist-muni-search')?.value || '').toUpperCase();
-    const rows = HIST_DATA.prefeitos[String(histMuniYear)] || [];
+    const rows = HIST_DATA.prefeitos[yr] || [];
     const filtered = rows.filter(r => !search || r.municipio.includes(search) || r.candidato.includes(search) || r.partido.includes(search));
     document.getElementById('hist-muni-count').textContent = filtered.length + ' municípios';
     const tbody = document.getElementById('hist-muni-tbody');
@@ -1687,10 +1787,13 @@
       const col = getPartyColor(r.partido);
       return `<tr>
         <td style="color:var(--text3);font-weight:700">${i+1}</td>
-        <td><strong>${r.municipio}</strong></td>
-        <td>${r.candidato}</td>
+        <td><span class="badge badge-blue" style="font-size:10px">Prefeito</span></td>
+        <td style="font-weight:700;color:var(--text2)">${yr}</td>
+        <td style="font-weight:500;font-size:11px"><strong>${r.municipio}</strong></td>
+        <td style="font-size:11px">${r.candidato}</td>
         <td><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${r.partido}</span></td>
         <td style="font-weight:600;color:var(--green)">${r.votos.toLocaleString('pt-BR')}</td>
+        <td><span class="badge badge-green">✅ Eleito</span></td>
       </tr>`;
     }).join('');
   }
@@ -1761,6 +1864,43 @@
 
   // ===== MAPA ELEITORAL =====
   let mapaYear = 2024;
+  let mapaTipo = 'municipal';
+  let mapaEstCargo = 'Senador';
+
+  function switchMapaTipo(tipo, el) {
+    mapaTipo = tipo;
+    document.querySelectorAll('#mapa-tipo-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    // Show/hide year tabs
+    document.querySelectorAll('#mapa-year-tabs .tab').forEach(t => {
+      const yr = t.textContent.trim();
+      if (tipo === 'municipal') {
+        t.style.display = (yr === '2022' || yr === '2018') ? 'none' : '';
+        if (yr === '2022' || yr === '2018') t.classList.remove('active');
+      } else {
+        t.style.display = (yr === '2024' || yr === '2020' || yr === '2016') ? 'none' : '';
+        if (yr === '2024' || yr === '2020' || yr === '2016') t.classList.remove('active');
+      }
+    });
+    // Set default year
+    if (tipo === 'municipal') {
+      if (mapaYear === 2022 || mapaYear === 2018) {
+        mapaYear = 2024;
+        const tab24 = [...document.querySelectorAll('#mapa-year-tabs .tab')].find(t => t.textContent.trim()==='2024');
+        if (tab24) tab24.classList.add('active');
+      }
+    } else {
+      if (mapaYear === 2024 || mapaYear === 2020 || mapaYear === 2016) {
+        mapaYear = 2022;
+        const tab22 = [...document.querySelectorAll('#mapa-year-tabs .tab')].find(t => t.textContent.trim()==='2022');
+        if (tab22) tab22.classList.add('active');
+      }
+    }
+    // Toggle estadual cargo row
+    const cargoWrap = document.getElementById('mapa-est-cargo-wrap');
+    if (cargoWrap) cargoWrap.style.display = tipo === 'estadual' ? '' : 'none';
+    renderMapaAll();
+  }
 
   function switchMapaYear(yr, el) {
     mapaYear = yr;
@@ -1769,52 +1909,128 @@
     renderMapaAll();
   }
 
+  function switchMapaEstCargo(cargo, el) {
+    mapaEstCargo = cargo;
+    document.querySelectorAll('#mapa-est-cargo-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderMapaAll();
+  }
+
   function renderMapaAll() {
     const yr = String(mapaYear);
-    const bairros = HIST_DATA.bairros_municipais[yr] || [];
+    const isEst = mapaTipo === 'estadual';
+
+    const bairros = isEst ? (HIST_DATA.bairros_estaduais[yr] || []) : (HIST_DATA.bairros_municipais[yr] || []);
+    const munis   = isEst ? (HIST_DATA.municipios_estaduais[yr] || []) : [];
     const totalVotos = bairros.reduce((s, b) => s + b.votos, 0);
     const el_tv = document.getElementById('mapa-total-votos');
     if (el_tv) el_tv.textContent = fmtVotos(totalVotos);
     const el_b = document.getElementById('mapa-bairros');
     if (el_b) el_b.textContent = bairros.length;
-    const pe = HIST_DATA.partidos_eleitos[yr] || [];
-    const el_pv = document.getElementById('mapa-partido-vencedor');
-    if (el_pv) el_pv.textContent = pe[0]?.partido || '—';
-    const el_pp = document.getElementById('mapa-partido-prefeitos');
-    if (el_pp) el_pp.textContent = pe[0] ? pe[0].prefeitos + ' prefeitos eleitos' : '—';
+
+    if (isEst) {
+      // Partido mais votado estadual
+      const partidos = HIST_DATA.partidos_estaduais[yr] || [];
+      const el_pv = document.getElementById('mapa-partido-vencedor');
+      if (el_pv) el_pv.textContent = partidos[0]?.partido || '—';
+      const el_pp = document.getElementById('mapa-partido-prefeitos');
+      if (el_pp) el_pp.textContent = partidos[0] ? fmtVotos(partidos[0].votos) + ' votos' : '—';
+      const el_lbl = document.getElementById('mapa-partido-label');
+      if (el_lbl) el_lbl.textContent = 'Partido Mais Votado';
+      // Update column headers
+      const colLocal = document.getElementById('mapa-col-local');
+      if (colLocal) colLocal.textContent = 'Município';
+      const colCand = document.getElementById('mapa-col-cand');
+      if (colCand) colCand.textContent = 'Candidato';
+      const colStatus = document.getElementById('mapa-col-status');
+      if (colStatus) colStatus.textContent = 'Status';
+      colStatus && (colStatus.style.display = '');
+      // Update vereadores panel to show top candidatos
+      const vtitle = document.getElementById('mapa-vereadores-title');
+      if (vtitle) vtitle.textContent = `🏅 Top Candidatos — ${mapaEstCargo} ${yr}`;
+      const vsub = document.getElementById('mapa-vereadores-sub');
+      if (vsub) vsub.textContent = 'Eleições Estaduais · RO';
+      const cargoWrap = document.getElementById('mapa-est-cargo-wrap');
+      if (cargoWrap) cargoWrap.style.display = '';
+    } else {
+      const pe = HIST_DATA.partidos_eleitos[yr] || [];
+      const el_pv = document.getElementById('mapa-partido-vencedor');
+      if (el_pv) el_pv.textContent = pe[0]?.partido || '—';
+      const el_pp = document.getElementById('mapa-partido-prefeitos');
+      if (el_pp) el_pp.textContent = pe[0] ? pe[0].prefeitos + ' prefeitos eleitos' : '—';
+      const el_lbl = document.getElementById('mapa-partido-label');
+      if (el_lbl) el_lbl.textContent = 'Partido Mais Eleito';
+      const colCand = document.getElementById('mapa-col-cand');
+      if (colCand) colCand.textContent = 'Prefeito Eleito';
+      const colStatus = document.getElementById('mapa-col-status');
+      if (colStatus) colStatus.style.display = 'none';
+      const vtitle = document.getElementById('mapa-vereadores-title');
+      if (vtitle) vtitle.textContent = `🗳️ Vereadores por Partido — Porto Velho`;
+      const vsub = document.getElementById('mapa-vereadores-sub');
+      if (vsub) vsub.textContent = 'Câmara Municipal · RO';
+    }
 
     // Top bairros rank
     renderRankList('mapa-top-bairros', bairros.slice(0,15), 'bairro', 'votos');
 
-    // Prefeitos table
-    const prefeitos = HIST_DATA.prefeitos[yr] || [];
-    const q = (document.getElementById('mapa-search')?.value || '').toLowerCase();
-    const filtered = prefeitos.filter(p =>
-      !q || p.municipio.toLowerCase().includes(q) ||
-      p.candidato.toLowerCase().includes(q) ||
-      p.partido.toLowerCase().includes(q)
-    );
-    const tbody = document.getElementById('mapa-prefeitos-tbody');
-    if (tbody) tbody.innerHTML = filtered.map((p, i) => {
-      const col = getPartyColor(p.partido);
-      return `<tr>
-        <td style="color:var(--text3);font-weight:700">${i+1}</td>
-        <td style="font-weight:500;font-size:11px">${p.municipio}</td>
-        <td style="font-size:11px">${p.candidato}</td>
-        <td><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${p.partido}</span></td>
-        <td style="font-weight:600">${p.votos.toLocaleString('pt-BR')}</td>
-        <td class="edit-col"><button class="btn" style="padding:2px 8px;font-size:10px" onclick="editMapaRow(${i})">✏️</button></td>
-      </tr>`;
-    }).join('');
-    const el_cnt = document.getElementById('mapa-count');
-    if (el_cnt) el_cnt.textContent = `${filtered.length} municípios`;
-
-    // Partidos vencedores chart
-    renderPartiesChart('mapa-partidos-chart', null, pe);
-
-    // Vereadores chart
-    const vData = VEREADORES_DATA[yr] || [];
-    renderPartiesChart('mapa-vereadores-chart', null, vData.map(v => ({partido:v.partido, prefeitos:v.vereadores})));
+    if (isEst) {
+      // Candidates table (estadual)
+      const cands = HIST_DATA.estaduais[yr]?.[mapaEstCargo] || [];
+      const q = (document.getElementById('mapa-search')?.value || '').toLowerCase();
+      const filtered = cands.filter(c =>
+        !q || c.nome.toLowerCase().includes(q) || c.partido.toLowerCase().includes(q)
+      );
+      const tbody = document.getElementById('mapa-prefeitos-tbody');
+      if (tbody) tbody.innerHTML = filtered.map((c, i) => {
+        const col = getPartyColor(c.partido);
+        const isEleito = c.status === 'ELEITO';
+        return `<tr>
+          <td style="color:var(--text3);font-weight:700">${i+1}</td>
+          <td style="font-weight:500;font-size:11px">${c.nome}</td>
+          <td style="font-size:11px">${c.nome}</td>
+          <td><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${c.partido}</span></td>
+          <td style="font-weight:600">${c.votos.toLocaleString('pt-BR')}</td>
+          <td><span class="badge ${isEleito ? 'badge-green' : 'badge-gray'}">${isEleito ? '✅ Eleito' : 'Não eleito'}</span></td>
+          <td class="edit-col"></td>
+        </tr>`;
+      }).join('');
+      const el_cnt = document.getElementById('mapa-count');
+      if (el_cnt) el_cnt.textContent = `${filtered.length} candidatos`;
+      // Partidos chart (estadual)
+      const partidos = HIST_DATA.partidos_estaduais[yr] || [];
+      renderPartiesChart('mapa-partidos-chart', null, partidos.map(p => ({partido:p.partido, prefeitos:p.votos})));
+      // Top cands as vereadores-chart
+      const topCands = cands.slice(0,10);
+      renderRankList('mapa-vereadores-chart', topCands, 'nome', 'votos');
+    } else {
+      // Prefeitos table (municipal)
+      const prefeitos = HIST_DATA.prefeitos[yr] || [];
+      const q = (document.getElementById('mapa-search')?.value || '').toLowerCase();
+      const filtered = prefeitos.filter(p =>
+        !q || p.municipio.toLowerCase().includes(q) ||
+        p.candidato.toLowerCase().includes(q) ||
+        p.partido.toLowerCase().includes(q)
+      );
+      const tbody = document.getElementById('mapa-prefeitos-tbody');
+      if (tbody) tbody.innerHTML = filtered.map((p, i) => {
+        const col = getPartyColor(p.partido);
+        return `<tr>
+          <td style="color:var(--text3);font-weight:700">${i+1}</td>
+          <td style="font-weight:500;font-size:11px">${p.municipio}</td>
+          <td style="font-size:11px">${p.candidato}</td>
+          <td><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${p.partido}</span></td>
+          <td style="font-weight:600">${p.votos.toLocaleString('pt-BR')}</td>
+          <td style="display:none"></td>
+          <td class="edit-col"><button class="btn" style="padding:2px 8px;font-size:10px" onclick="editMapaRow(${i})">✏️</button></td>
+        </tr>`;
+      }).join('');
+      const el_cnt = document.getElementById('mapa-count');
+      if (el_cnt) el_cnt.textContent = `${filtered.length} municípios`;
+      const pe = HIST_DATA.partidos_eleitos[yr] || [];
+      renderPartiesChart('mapa-partidos-chart', null, pe);
+      const vData = VEREADORES_DATA[yr] || [];
+      renderPartiesChart('mapa-vereadores-chart', null, vData.map(v => ({partido:v.partido, prefeitos:v.vereadores})));
+    }
   }
 
   function editMapaRow(i) {
@@ -2485,6 +2701,324 @@ ${csvM}`;
     URL.revokeObjectURL(a.href);
     showToast(`📄 CSV exportado: raio-x-eleitoral-${rxTipo}-${rxAno}.csv`);
   }
+
+  // ========== INTELIGÊNCIA BI ==========
+  let biTab = 'eleitoral';
+
+  function switchBiTab(tab, el) {
+    biTab = tab;
+    document.querySelectorAll('#bi-main-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['eleitoral','partidos','municipios','campanha'].forEach(s => {
+      const sec = document.getElementById('bi-section-' + s);
+      if (sec) sec.style.display = s === tab ? '' : 'none';
+    });
+    renderBiAll();
+  }
+
+  function renderBiAll() {
+    const muni24 = HIST_DATA.municipios_municipais['2024'] || [];
+    const muni22 = HIST_DATA.municipios_estaduais['2022'] || [];
+    const pe24   = HIST_DATA.partidos_eleitos['2024'] || [];
+    const pe22   = HIST_DATA.partidos_estaduais['2022'] || [];
+    const all22  = ['Senador','Deputado Federal','Deputado Estadual']
+      .flatMap(c => (HIST_DATA.estaduais['2022']?.[c] || []).map(x => ({...x, cargo: c})));
+    const tot24 = muni24.reduce((s,m) => s + m.votos, 0);
+    const tot22 = muni22.reduce((s,m) => s + m.votos, 0);
+
+    // KPIs
+    const k1 = document.getElementById('bi-kpi-1');
+    if (k1) k1.textContent = fmtVotos(tot24);
+    const k2 = document.getElementById('bi-kpi-2');
+    if (k2) k2.textContent = fmtVotos(tot22);
+    const k3 = document.getElementById('bi-kpi-3');
+    if (k3) k3.textContent = pe24[0]?.partido || '—';
+    const k3b = document.getElementById('bi-kpi-3b');
+    if (k3b) k3b.textContent = pe24[0] ? pe24[0].prefeitos + ' prefeitos' : '—';
+    const topAll22 = [...all22].sort((a,b) => b.votos - a.votos)[0];
+    const k4 = document.getElementById('bi-kpi-4');
+    if (k4) k4.textContent = topAll22?.nome || '—';
+    const k4b = document.getElementById('bi-kpi-4b');
+    if (k4b) k4b.textContent = topAll22 ? `${topAll22.cargo} · ${topAll22.votos.toLocaleString('pt-BR')} votos` : '—';
+
+    // Count dias p/ eleição
+    const eleicao = new Date('2026-10-04');
+    const hoje = new Date();
+    const dias = Math.max(0, Math.round((eleicao - hoje) / 86400000));
+    const diasEl = document.getElementById('bi-dias-eleicao');
+    if (diasEl) diasEl.textContent = dias;
+
+    if (biTab === 'eleitoral' || biTab !== biTab) {
+      // Evolução votos por eleição
+      const anos = [
+        {ano:'Municipal 2016', total: (HIST_DATA.municipios_municipais['2016']||[]).reduce((s,m)=>s+m.votos,0), col:'var(--purple)'},
+        {ano:'Estadual 2018',  total: (HIST_DATA.municipios_estaduais['2018']||[]).reduce((s,m)=>s+m.votos,0), col:'var(--blue)'},
+        {ano:'Municipal 2020', total: (HIST_DATA.municipios_municipais['2020']||[]).reduce((s,m)=>s+m.votos,0), col:'var(--teal)'},
+        {ano:'Estadual 2022',  total: (HIST_DATA.municipios_estaduais['2022']||[]).reduce((s,m)=>s+m.votos,0), col:'var(--green)'},
+        {ano:'Municipal 2024', total: (HIST_DATA.municipios_municipais['2024']||[]).reduce((s,m)=>s+m.votos,0), col:'var(--yellow)'},
+      ];
+      const maxT = Math.max(...anos.map(a => a.total));
+      const evo = document.getElementById('bi-evolucao-chart');
+      if (evo) {
+        evo.innerHTML = anos.map(a => {
+          const pct = Math.round((a.total/maxT)*100);
+          return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+            <div style="width:110px;font-size:11px;color:var(--text);text-align:right;flex-shrink:0">${a.ano}</div>
+            <div style="flex:1;height:22px;background:var(--border);border-radius:3px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:${a.col};border-radius:3px;display:flex;align-items:center;padding-left:6px">
+                <span style="font-size:11px;font-weight:700;color:#fff;white-space:nowrap">${fmtVotos(a.total)}</span>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      // Top 10 candidatos 2022 (all cargos)
+      const topCands = all22.sort((a,b)=>b.votos-a.votos).slice(0,10);
+      const maxV = topCands[0]?.votos || 1;
+      const tc = document.getElementById('bi-top-cands');
+      if (tc) {
+        tc.innerHTML = topCands.map((c,i) => {
+          const col = getPartyColor(c.partido);
+          const pct = Math.round((c.votos/maxV)*100);
+          const isEleito = c.status === 'ELEITO';
+          return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <div style="width:14px;font-size:10px;color:var(--text3);font-weight:700">${i+1}</div>
+            <div style="width:110px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${c.nome}">${c.nome}</div>
+            <div style="flex:1;height:16px;background:var(--border);border-radius:2px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:${col};border-radius:2px"></div>
+            </div>
+            <div style="width:44px;font-size:10px;text-align:right">${fmtVotos(c.votos)}</div>
+            <span class="badge ${isEleito?'badge-green':'badge-gray'}" style="font-size:9px">${isEleito?'✅':'❌'}</span>
+          </div>`;
+        }).join('');
+      }
+      // Partidos 2022
+      renderPartiesChart('bi-partidos-2022', null, (pe22||[]).map(p=>({partido:p.partido,prefeitos:p.votos})));
+      // Partidos 2024
+      renderPartiesChart('bi-partidos-2024', null, pe24);
+    }
+
+    if (biTab === 'partidos') {
+      // Municipal comparison 2016/2020/2024
+      const allMuniYears = ['2016','2020','2024'];
+      const muniPartidos = {};
+      allMuniYears.forEach(yr => {
+        (HIST_DATA.partidos_municipais[yr]||[]).forEach(p => {
+          if (!muniPartidos[p.partido]) muniPartidos[p.partido] = {};
+          muniPartidos[p.partido][yr] = p.votos;
+        });
+      });
+      const topMuniPartidos = Object.entries(muniPartidos)
+        .map(([partido, vals]) => ({partido, total: Object.values(vals).reduce((s,v)=>s+v,0), vals}))
+        .sort((a,b)=>b.total-a.total).slice(0,8);
+      const colsYr = {'2016':'var(--purple)','2020':'var(--blue)','2024':'var(--green)'};
+      const pmc = document.getElementById('bi-partidos-muni-comp');
+      if (pmc) {
+        pmc.innerHTML = topMuniPartidos.map(p => {
+          const maxV2 = Math.max(...allMuniYears.map(yr => p.vals[yr]||0)) || 1;
+          return `<div style="margin-bottom:10px">
+            <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px">${p.partido}</div>
+            ${allMuniYears.map(yr => {
+              const v = p.vals[yr]||0;
+              return `<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
+                <div style="width:32px;font-size:10px;color:${colsYr[yr]};font-weight:700">${yr}</div>
+                <div style="flex:1;height:10px;background:var(--border);border-radius:2px;overflow:hidden">
+                  <div style="width:${Math.round((v/maxV2)*100)}%;height:100%;background:${colsYr[yr]};border-radius:2px"></div>
+                </div>
+                <div style="width:44px;font-size:10px;text-align:right">${fmtVotos(v)}</div>
+              </div>`;
+            }).join('')}
+          </div>`;
+        }).join('');
+      }
+      // Estadual comparison 2018/2022
+      const estYears = ['2018','2022'];
+      const estPartidos = {};
+      estYears.forEach(yr => {
+        (HIST_DATA.partidos_estaduais[yr]||[]).forEach(p => {
+          if (!estPartidos[p.partido]) estPartidos[p.partido] = {};
+          estPartidos[p.partido][yr] = p.votos;
+        });
+      });
+      const topEstPartidos = Object.entries(estPartidos)
+        .map(([partido, vals]) => ({partido, total: Object.values(vals).reduce((s,v)=>s+v,0), vals}))
+        .sort((a,b)=>b.total-a.total).slice(0,8);
+      const colsEst = {'2018':'var(--blue)','2022':'var(--green)'};
+      const pec = document.getElementById('bi-partidos-est-comp');
+      if (pec) {
+        pec.innerHTML = topEstPartidos.map(p => {
+          const maxV2 = Math.max(...estYears.map(yr => p.vals[yr]||0)) || 1;
+          return `<div style="margin-bottom:10px">
+            <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px">${p.partido}</div>
+            ${estYears.map(yr => {
+              const v = p.vals[yr]||0;
+              return `<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
+                <div style="width:32px;font-size:10px;color:${colsEst[yr]};font-weight:700">${yr}</div>
+                <div style="flex:1;height:10px;background:var(--border);border-radius:2px;overflow:hidden">
+                  <div style="width:${Math.round((v/maxV2)*100)}%;height:100%;background:${colsEst[yr]};border-radius:2px"></div>
+                </div>
+                <div style="width:44px;font-size:10px;text-align:right">${fmtVotos(v)}</div>
+              </div>`;
+            }).join('')}
+          </div>`;
+        }).join('');
+      }
+      // Partidos detail 2024
+      renderPartiesChart('bi-partidos-detail', null, pe24);
+    }
+
+    if (biTab === 'municipios') {
+      renderRankList('bi-muni-2024', (HIST_DATA.municipios_municipais['2024']||[]).slice(0,15), 'municipio', 'votos');
+      renderRankList('bi-muni-2022', (HIST_DATA.municipios_estaduais['2022']||[]).slice(0,15), 'municipio', 'votos');
+      // Bairros comp 2016/2020/2024
+      const allBairros = new Set();
+      ['2016','2020','2024'].forEach(yr => (HIST_DATA.bairros_municipais[yr]||[]).forEach(b => allBairros.add(b.bairro)));
+      const bComp = document.getElementById('bi-bairros-comp');
+      const colsBr = {'2016':'var(--purple)','2020':'var(--blue)','2024':'var(--green)'};
+      if (bComp) {
+        bComp.innerHTML = [...allBairros].slice(0,12).map(nome => {
+          const vals = ['2016','2020','2024'].map(yr => (HIST_DATA.bairros_municipais[yr]||[]).find(b=>b.bairro===nome)?.votos||0);
+          const maxV2 = Math.max(...vals)||1;
+          return `<div style="margin-bottom:10px">
+            <div style="font-size:11px;color:var(--text);font-weight:500;margin-bottom:4px">${nome}</div>
+            ${['2016','2020','2024'].map((yr,i) => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+              <div style="width:32px;font-size:10px;color:${colsBr[yr]};font-weight:700">${yr}</div>
+              <div style="flex:1;height:12px;background:var(--border);border-radius:2px;overflow:hidden">
+                <div style="width:${Math.round((vals[i]/maxV2)*100)}%;height:100%;background:${colsBr[yr]};border-radius:2px"></div>
+              </div>
+              <div style="width:46px;font-size:10px;text-align:right">${fmtVotos(vals[i])}</div>
+            </div>`).join('')}
+          </div>`;
+        }).join('');
+      }
+    }
+
+    if (biTab === 'campanha') {
+      // Eleitores counter
+      const elEl = document.getElementById('bi-camp-eleitores');
+      const crmEl = document.getElementById('counter-eleitores');
+      if (elEl) elEl.textContent = crmEl ? crmEl.textContent : '—';
+      // Bairro comparison 2020 vs 2024
+      const b20 = HIST_DATA.bairros_municipais['2020'] || [];
+      const b24 = HIST_DATA.bairros_municipais['2024'] || [];
+      const bComp2 = document.getElementById('bi-camp-bairro-comp');
+      if (bComp2) {
+        const items = b24.slice(0,12).map(b => {
+          const prev = b20.find(x=>x.bairro===b.bairro)?.votos||0;
+          return {...b, prev};
+        });
+        const maxV2 = Math.max(...items.map(b=>b.votos))||1;
+        bComp2.innerHTML = items.map(b => {
+          const pct24 = Math.round((b.votos/maxV2)*100);
+          const pct20 = Math.round((b.prev/maxV2)*100);
+          const varPct = b.prev ? Math.round(((b.votos-b.prev)/b.prev)*100) : null;
+          const varCol = varPct === null ? 'var(--text2)' : varPct >= 0 ? 'var(--green)' : 'var(--red)';
+          return `<div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+              <span style="font-weight:500">${b.bairro}</span>
+              <span style="color:${varCol};font-weight:700">${varPct!==null?(varPct>=0?'▲ +':'▼ ')+varPct+'%':'—'}</span>
+            </div>
+            <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:2px">
+              <div style="height:100%;width:${pct24}%;background:var(--green);border-radius:3px"></div>
+            </div>
+            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${pct20}%;background:var(--blue-bg);border-radius:2px"></div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      // Municípios growth 2020→2024
+      const m20 = HIST_DATA.municipios_municipais['2020'] || [];
+      const m24 = HIST_DATA.municipios_municipais['2024'] || [];
+      const mGrowth = document.getElementById('bi-camp-muni-growth');
+      if (mGrowth) {
+        const items = m24.slice(0,10).map(m => {
+          const prev = m20.find(x=>x.municipio===m.municipio)?.votos||0;
+          const varPct = prev ? Math.round(((m.votos-prev)/prev)*100) : null;
+          return {...m, prev, varPct};
+        }).sort((a,b) => (b.varPct||0) - (a.varPct||0));
+        mGrowth.innerHTML = items.map(m => {
+          const col = m.varPct >= 0 ? 'var(--green)' : 'var(--red)';
+          return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+            <div style="width:120px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${m.municipio}">${m.municipio}</div>
+            <div style="flex:1;font-size:10px;color:var(--text2)">${m.prev.toLocaleString('pt-BR')} → ${m.votos.toLocaleString('pt-BR')}</div>
+            <span style="color:${col};font-weight:700;font-size:11px">${m.varPct!==null?(m.varPct>=0?'▲ +':'▼ ')+m.varPct+'%':'—'}</span>
+          </div>`;
+        }).join('');
+      }
+    }
+  }
+
+  // ========== HISTÓRICO – LINHA DO TEMPO ==========
+  let timelineCargo  = 'todos';
+  let timelineStatus = 'todos';
+
+  function switchTimelineCargo(cargo, el) {
+    timelineCargo = cargo;
+    document.querySelectorAll('#hist-tl-cargo-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderTimeline();
+  }
+
+  function switchTimelineStatus(status, el) {
+    timelineStatus = status;
+    document.querySelectorAll('#hist-tl-status-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderTimeline();
+  }
+
+  function _buildTimelineData() {
+    const rows = [];
+    // Municipal: 2016/2020/2024 — Prefeito
+    ['2016','2020','2024'].forEach(yr => {
+      (HIST_DATA.prefeitos[yr]||[]).forEach(p => {
+        rows.push({ano:yr, cargo:'Prefeito', candidato:p.candidato, partido:p.partido, votos:p.votos, status:'ELEITO', local:p.municipio});
+      });
+    });
+    // Estadual: 2018/2022 — Senador/Dep.Federal/Dep.Estadual
+    ['2018','2022'].forEach(yr => {
+      Object.entries(HIST_DATA.estaduais[yr]||{}).forEach(([cargo, cands]) => {
+        cands.forEach(c => {
+          rows.push({ano:yr, cargo, candidato:c.nome, partido:c.partido, votos:c.votos, status:c.status, local:'Rondônia — RO'});
+        });
+      });
+    });
+    return rows;
+  }
+
+  function renderTimeline() {
+    const allRows = _buildTimelineData();
+    const q = (document.getElementById('hist-tl-search')?.value || '').toUpperCase();
+    const filtered = allRows.filter(r => {
+      if (timelineCargo !== 'todos' && r.cargo !== timelineCargo) return false;
+      if (timelineStatus !== 'todos' && r.status !== timelineStatus) return false;
+      if (q && !r.candidato.toUpperCase().includes(q) && !r.partido.toUpperCase().includes(q) && !r.cargo.toUpperCase().includes(q)) return false;
+      return true;
+    }).sort((a,b) => b.ano - a.ano || b.votos - a.votos);
+
+    const cnt = document.getElementById('hist-tl-count');
+    if (cnt) cnt.textContent = `${filtered.length} registros`;
+
+    const tbody = document.getElementById('hist-tl-tbody');
+    if (!tbody) return;
+    const cargoColors = {'Prefeito':'var(--green)','Senador':'var(--blue)','Deputado Federal':'var(--purple)','Deputado Estadual':'var(--teal)'};
+    tbody.innerHTML = filtered.slice(0, 200).map((r, i) => {
+      const col = getPartyColor(r.partido);
+      const isEleito = r.status === 'ELEITO';
+      const cargoBadgeCol = cargoColors[r.cargo] || 'var(--text2)';
+      return `<tr>
+        <td style="color:var(--text3);font-weight:700">${i+1}</td>
+        <td style="font-weight:700;color:var(--text2)">${r.ano}</td>
+        <td><span class="badge" style="background:${cargoBadgeCol}22;color:${cargoBadgeCol};border:1px solid ${cargoBadgeCol}44;font-size:10px">${r.cargo}</span></td>
+        <td style="font-weight:500;font-size:11px">${r.candidato}</td>
+        <td><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${r.partido}</span></td>
+        <td style="font-weight:600">${r.votos.toLocaleString('pt-BR')}</td>
+        <td><span class="badge ${isEleito ? 'badge-green' : 'badge-gray'}">${isEleito ? '✅ Eleito' : '❌ Não Eleito'}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${r.local}</td>
+      </tr>`;
+    }).join('');
+  }
+
 
 </script>
 </body>
