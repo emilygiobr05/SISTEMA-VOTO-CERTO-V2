@@ -275,6 +275,9 @@
     <div class="nav-item" onclick="showModule('bi', this)">
       <span class="nav-icon">📈</span> Inteligência BI
     </div>
+    <div class="nav-item" onclick="showModule('historico', this)">
+      <span class="nav-icon">📊</span> Histórico Eleitoral
+    </div>
     <div class="nav-item notif" onclick="showModule('comunicacao', this)">
       <span class="nav-icon">📢</span> Comunicação
     </div>
@@ -1089,6 +1092,125 @@
       </div>
     </div>
 
+
+    <!-- ===== HISTÓRICO ELEITORAL ===== -->
+    <div id="mod-historico" class="module-section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Municípios Analisados</div>
+          <div class="stat-value" style="color:var(--blue)">52</div>
+          <div class="stat-change stat-neutral">Rondônia — RO</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Anos Cobertos</div>
+          <div class="stat-value" style="color:var(--purple)">5</div>
+          <div class="stat-change stat-neutral">2016 · 2018 · 2020 · 2022 · 2024</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Votos (Est. 2022)</div>
+          <div class="stat-value" style="color:var(--green)">4,2M</div>
+          <div class="stat-change stat-neutral">Dep. Est., Fed. e Senador</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Prefeitos Eleitos (2024)</div>
+          <div class="stat-value" style="color:var(--yellow)">52</div>
+          <div class="stat-change stat-neutral">todos os municípios de RO</div>
+        </div>
+      </div>
+
+      <div class="tabs" id="hist-main-tabs">
+        <div class="tab active" onclick="switchHistTab('municipal', this)">🏛️ Eleições Municipais (Prefeitos)</div>
+        <div class="tab" onclick="switchHistTab('estadual', this)">🗺️ Eleições Estaduais (Dep./Senador)</div>
+      </div>
+
+      <!-- MUNICIPAL -->
+      <div id="hist-municipal" class="hist-section">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text2)">Ano:</span>
+          <div class="tabs" style="border:none;margin:0" id="hist-muni-year-tabs">
+            <div class="tab active" onclick="switchMuniYear(2024, this)">2024</div>
+            <div class="tab" onclick="switchMuniYear(2020, this)">2020</div>
+            <div class="tab" onclick="switchMuniYear(2016, this)">2016</div>
+          </div>
+          <span style="margin-left:auto;font-size:12px;color:var(--text2)">Filtrar:</span>
+          <input id="hist-muni-search" type="text" class="topbar-search" style="width:180px" placeholder="🔍 Município..." oninput="renderMuniTable()">
+        </div>
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏆 Prefeitos Eleitos</div>
+              <span id="hist-muni-count" class="badge badge-blue">52 municípios</span>
+            </div>
+            <div class="table-container" style="max-height:380px;overflow-y:auto">
+              <table>
+                <thead><tr><th>#</th><th>Município</th><th>Prefeito Eleito</th><th>Partido</th><th>Votos</th></tr></thead>
+                <tbody id="hist-muni-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🎯 Partidos Vencedores</div></div>
+            <div id="hist-muni-parties-chart" style="margin-bottom:8px"></div>
+            <div id="hist-muni-parties-legend"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏙️ Top Municípios por Votos</div></div>
+            <div id="hist-muni-topmuni"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">📍 Top Bairros por Votação</div></div>
+            <div id="hist-muni-topbairro"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ESTADUAL -->
+      <div id="hist-estadual" class="hist-section" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text2)">Ano:</span>
+          <div class="tabs" style="border:none;margin:0" id="hist-est-year-tabs">
+            <div class="tab active" onclick="switchEstYear(2022, this)">2022</div>
+            <div class="tab" onclick="switchEstYear(2018, this)">2018</div>
+          </div>
+          <span style="font-size:12px;color:var(--text2)">Cargo:</span>
+          <div class="tabs" style="border:none;margin:0" id="hist-est-cargo-tabs">
+            <div class="tab active" onclick="switchEstCargo('Senador', this)">Senador</div>
+            <div class="tab" onclick="switchEstCargo('Deputado Federal', this)">Dep. Federal</div>
+            <div class="tab" onclick="switchEstCargo('Deputado Estadual', this)">Dep. Estadual</div>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title" id="hist-est-table-title">🏅 Top Candidatos — Senador 2022</div>
+            </div>
+            <div class="table-container" style="max-height:380px;overflow-y:auto">
+              <table>
+                <thead><tr><th>#</th><th>Candidato</th><th>Partido</th><th>Votos</th><th>Status</th></tr></thead>
+                <tbody id="hist-est-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🎯 Partidos por Total de Votos</div></div>
+            <div id="hist-est-parties"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏙️ Top Municípios por Votos</div></div>
+            <div id="hist-est-topmuni"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">📍 Top Bairros por Votação</div></div>
+            <div id="hist-est-topbairro"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -1130,7 +1252,7 @@
     agenda: 'Agenda e Eventos',
     financeiro: 'Financeiro',
     gamificacao: 'Gamificação',
-    seguranca: 'Segurança e Controle',
+    historico: 'Histórico Eleitoral — Rondônia',
   };
 
   function showModule(id, el) {
@@ -1183,6 +1305,161 @@
     animateCounter('counter-confirmados', 1480, 1800);
     animateCounter('counter-votos', 5940, 2000);
   });
+  // ===== ELECTION HISTORICAL DATA =====
+  const HIST_DATA = {"estaduais":{"2018":{"Senador":[{"nome":"MARCOS ROGÉRIO","votos":324939,"partido":"DEM","status":"ELEITO"},{"nome":"CONFUCIO MOURA","votos":230361,"partido":"MDB","status":"ELEITO"},{"nome":"JAIME BAGATTOLI","votos":212077,"partido":"PSL","status":"NÃO ELEITO"},{"nome":"JESUALDO PIRES","votos":195641,"partido":"PSB","status":"NÃO ELEITO"},{"nome":"CARLOS MAGNO","votos":163859,"partido":"PP","status":"NÃO ELEITO"},{"nome":"VALDIR RAUPP","votos":80370,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"ALUÍZIO VIDAL","votos":51917,"partido":"REDE","status":"NÃO ELEITO"},{"nome":"PASTOR EDÉSIO FERNANDES","votos":43539,"partido":"PRB","status":"NÃO ELEITO"},{"nome":"FABRICIO JURADO","votos":34770,"partido":"NOVO","status":"NÃO ELEITO"},{"nome":"TED WILSON","votos":13091,"partido":"PRTB","status":"NÃO ELEITO"}],"Deputado Federal":[{"nome":"LÉO MORAES","votos":69565,"partido":"PODE","status":"NÃO ELEITO"},{"nome":"EXPEDITO NETTO","votos":39953,"partido":"PSD","status":"NÃO ELEITO"},{"nome":"MARIANA CARVALHO","votos":38776,"partido":"PSDB","status":"NÃO ELEITO"},{"nome":"LUCIO MOSQUINI","votos":38630,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"JAQUELINE CASSOL","votos":34193,"partido":"PP","status":"NÃO ELEITO"},{"nome":"SILVIA CRISTINA","votos":33038,"partido":"PDT","status":"NÃO ELEITO"},{"nome":"DR. MAURO NAZIF","votos":30399,"partido":"PSB","status":"NÃO ELEITO"},{"nome":"TIZIU JIDALIAS","votos":28577,"partido":"SOLIDARIEDADE","status":"NÃO ELEITO"},{"nome":"CORONEL CHRISÓSTOMO","votos":28344,"partido":"PSL","status":"NÃO ELEITO"},{"nome":"PADOVANI DA AGRICULTURA","votos":26656,"partido":"PSL","status":"NÃO ELEITO"},{"nome":"LUCAS FOLLADOR","votos":26566,"partido":"DEM","status":"NÃO ELEITO"},{"nome":"LUIZ CLAUDIO DA AGRICULTURA","votos":26438,"partido":"PR","status":"NÃO ELEITO"},{"nome":"LINDOMAR GARÇON","votos":24786,"partido":"PRB","status":"NÃO ELEITO"},{"nome":"HOSANA CAPIXABA","votos":21895,"partido":"PTB","status":"NÃO ELEITO"},{"nome":"CRISTIANE LOPES","votos":20350,"partido":"PP","status":"NÃO ELEITO"},{"nome":"PASTOR VALADARES","votos":20297,"partido":"PSC","status":"NÃO ELEITO"},{"nome":"ROSÁRIA HELENA","votos":18341,"partido":"PROS","status":"NÃO ELEITO"},{"nome":"MARINHA RAUPP","votos":18223,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"AFFONSO DA MABEL","votos":16162,"partido":"DEM","status":"NÃO ELEITO"},{"nome":"DR. WENCESLAU","votos":12857,"partido":"PMN","status":"NÃO ELEITO"}],"Deputado Estadual":[{"nome":"LEBRÃO","votos":20357,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"JEAN OLIVEIRA","votos":17823,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"LUIZINHO GOEBEL","votos":16999,"partido":"PV","status":"NÃO ELEITO"},{"nome":"LAERTE GOMES","votos":16984,"partido":"PSDB","status":"NÃO ELEITO"},{"nome":"LAZINHO DA FETAGRO","votos":14908,"partido":"PT","status":"NÃO ELEITO"},{"nome":"ALEX REDANO","votos":13233,"partido":"PRB","status":"NÃO ELEITO"},{"nome":"CABO JHONY PAIXÃO","votos":12981,"partido":"PRB","status":"NÃO ELEITO"},{"nome":"ADELINO FOLLADOR","votos":12890,"partido":"DEM","status":"NÃO ELEITO"},{"nome":"ADAILTON FÚRIA","votos":12859,"partido":"PSD","status":"NÃO ELEITO"},{"nome":"ANDERSON DO SINGEPERON","votos":11429,"partido":"PROS","status":"NÃO ELEITO"},{"nome":"EZEQUIEL NEIVA","votos":11257,"partido":"PTB","status":"NÃO ELEITO"},{"nome":"MARCELINO TENÓRIO","votos":11045,"partido":"PRP","status":"NÃO ELEITO"},{"nome":"DR. NEIDSON","votos":10699,"partido":"PMN","status":"NÃO ELEITO"},{"nome":"CASSIA DOS MULETAS","votos":10033,"partido":"PODE","status":"NÃO ELEITO"},{"nome":"PASTOR ALEX SILVA","votos":9995,"partido":"PRB","status":"NÃO ELEITO"},{"nome":"CIRONE DA TOZZO","votos":9962,"partido":"PODE","status":"NÃO ELEITO"},{"nome":"WILLIAMES PIMENTEL","votos":9886,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"CHIQUINHO","votos":9524,"partido":"PSB","status":"NÃO ELEITO"},{"nome":"SÓ NA BENÇA","votos":9297,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"JESUINO BOABAID","votos":9111,"partido":"PMN","status":"NÃO ELEITO"}]},"2022":{"Senador":[{"nome":"JAIME BAGATTOLI","votos":293488,"partido":"PL","status":"ELEITO"},{"nome":"MARIANA CARVALHO","votos":263559,"partido":"REPUBLICANOS","status":"NÃO ELEITO"},{"nome":"JAQUELINE CASSOL","votos":104020,"partido":"PP","status":"NÃO ELEITO"},{"nome":"EXPEDITO JUNIOR","votos":83946,"partido":"PSD","status":"NÃO ELEITO"},{"nome":"ACIR GURGACZ","votos":63300,"partido":"PDT","status":"NÃO ELEITO"},{"nome":"PASTOR JOSINELIO","votos":7617,"partido":"PMB","status":"NÃO ELEITO"},{"nome":"DRA ROSANGELA LÁZARO","votos":3788,"partido":"AGIR","status":"NÃO ELEITO"}],"Deputado Federal":[{"nome":"DR FERNANDO MÁXIMO","votos":85604,"partido":"UNIÃO","status":"NÃO ELEITO"},{"nome":"SILVIA CRISTINA","votos":65012,"partido":"PL","status":"NÃO ELEITO"},{"nome":"LUCIO MOSQUINI","votos":48735,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"MAURÍCIO CARVALHO","votos":32637,"partido":"UNIÃO","status":"NÃO ELEITO"},{"nome":"FÁTIMA CLEIDE","votos":28422,"partido":"PT","status":"NÃO ELEITO"},{"nome":"JOLIANE FURIA","votos":24630,"partido":"PSD","status":"NÃO ELEITO"},{"nome":"CORONEL CHRISÓSTOMO","votos":24406,"partido":"PL","status":"NÃO ELEITO"},{"nome":"RAFAEL FERA O FISCAL DO POVO","votos":24286,"partido":"PODE","status":"NÃO ELEITO"},{"nome":"THIAGO FLORES","votos":23791,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"CRISTIANE LOPES","votos":22806,"partido":"UNIÃO","status":"NÃO ELEITO"},{"nome":"EXPEDITO NETTO","votos":20054,"partido":"PSD","status":"NÃO ELEITO"},{"nome":"LUIZ CLÁUDIO DA AGRICULTURA","votos":19157,"partido":"PL","status":"NÃO ELEITO"},{"nome":"ANDERSON PEREIRA","votos":18303,"partido":"REPUBLICANOS","status":"NÃO ELEITO"},{"nome":"DR. MAURO NAZIF","votos":16774,"partido":"PSB","status":"NÃO ELEITO"},{"nome":"PASTOR POCIDÔNIO","votos":16155,"partido":"PSC","status":"NÃO ELEITO"},{"nome":"ROSANI DONADON","votos":15365,"partido":"PSD","status":"NÃO ELEITO"},{"nome":"DELEGADO FLORI","votos":15343,"partido":"PODE","status":"NÃO ELEITO"},{"nome":"LINDOMAR GARÇON","votos":14907,"partido":"REPUBLICANOS","status":"NÃO ELEITO"},{"nome":"SOFIA ANDRADE","votos":14634,"partido":"PL","status":"NÃO ELEITO"},{"nome":"PADOVANI DA AGRICULTURA","votos":13406,"partido":"PSC","status":"NÃO ELEITO"}],"Deputado Estadual":[{"nome":"LAERTE GOMES","votos":25603,"partido":"PSD","status":"NÃO ELEITO"},{"nome":"IEDA CHAVES","votos":24667,"partido":"UNIÃO","status":"NÃO ELEITO"},{"nome":"ISMAEL CRISPIN","votos":23417,"partido":"PSB","status":"NÃO ELEITO"},{"nome":"CIRONE DEIRÓ","votos":22207,"partido":"UNIÃO","status":"NÃO ELEITO"},{"nome":"EZEQUIEL NEIVA","votos":20895,"partido":"UNIÃO","status":"NÃO ELEITO"},{"nome":"ALEX REDANO","votos":19549,"partido":"REPUBLICANOS","status":"NÃO ELEITO"},{"nome":"MARCELO CRUZ","votos":18798,"partido":"PATRIOTA","status":"NÃO ELEITO"},{"nome":"DR LUIS DO HOSPITAL","votos":18248,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"CÁSSIO GOIS","votos":17753,"partido":"PSD","status":"NÃO ELEITO"},{"nome":"JEAN OLIVEIRA","votos":17125,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"DELEGADO LUCAS TORRES","votos":14298,"partido":"PP","status":"NÃO ELEITO"},{"nome":"LUIZINHO GOEBEL","votos":14162,"partido":"PSC","status":"NÃO ELEITO"},{"nome":"AFFONSO CANDIDO","votos":13665,"partido":"PL","status":"NÃO ELEITO"},{"nome":"JEAN MENDONÇA","votos":13488,"partido":"PL","status":"NÃO ELEITO"},{"nome":"GISLAINE LEBRINHA","votos":12623,"partido":"UNIÃO","status":"NÃO ELEITO"},{"nome":"NEGÃO FILHO DO ISAÚ","votos":12432,"partido":"MDB","status":"NÃO ELEITO"},{"nome":"ROSANGELA DONADON","votos":12097,"partido":"UNIÃO","status":"NÃO ELEITO"},{"nome":"DELEGADO RODRIGO CAMARGO","votos":11804,"partido":"REPUBLICANOS","status":"NÃO ELEITO"},{"nome":"CHIQUINHO","votos":11449,"partido":"PSB","status":"NÃO ELEITO"},{"nome":"PEDRO FERNANDES","votos":10950,"partido":"PTB","status":"NÃO ELEITO"}]}},"partidos_estaduais":{"2018":[{"partido":"PSL","votos":1041381},{"partido":"MDB","votos":625546},{"partido":"PSDB","votos":575134},{"partido":"DEM","votos":403213},{"partido":"PSB","votos":283378},{"partido":"PP","votos":262763},{"partido":"REDE","votos":174977},{"partido":"PODE","votos":149291},{"partido":"PRB","votos":136787},{"partido":"PSD","votos":72967},{"partido":"PDT","votos":69583},{"partido":"PTB","votos":54907}],"2022":[{"partido":"PL","votos":1229554},{"partido":"UNIÃO","votos":1106734},{"partido":"REPUBLICANOS","votos":398095},{"partido":"PODE","votos":236977},{"partido":"PSD","votos":231634},{"partido":"PP","votos":159608},{"partido":"MDB","votos":151846},{"partido":"PSC","votos":108455},{"partido":"SOLIDARIEDADE","votos":88695},{"partido":"PATRIOTA","votos":83709},{"partido":"PSB","votos":82217},{"partido":"PDT","votos":78832}]},"bairros_estaduais":{"2018":[{"bairro":"CENTRO","votos":704294},{"bairro":"ZONA RURAL","votos":91230},{"bairro":"SETOR 02","votos":88423},{"bairro":"SETOR 01","votos":87477},{"bairro":"NOVA BRASILIA","votos":86323},{"bairro":"SETOR 03","votos":75613},{"bairro":"BNH","votos":69600},{"bairro":"JUSCELINO KUBITSCHEK","votos":63416},{"bairro":"SETOR 04","votos":62598},{"bairro":"PLANALTO","votos":57330},{"bairro":"ECOVILE","votos":54071},{"bairro":"COHAB","votos":53518},{"bairro":"FLODOALDO PONTES PINTO","votos":49599},{"bairro":"LIBERDADE","votos":49370},{"bairro":"SETOR 05","votos":41832}],"2022":[{"bairro":"CENTRO","votos":654427},{"bairro":"SETOR 02","votos":91457},{"bairro":"SETOR 01","votos":85585},{"bairro":"NOVA BRASÍLIA","votos":81041},{"bairro":"ZONA RURAL","votos":75634},{"bairro":"SETOR 03","votos":70774},{"bairro":"BNH","votos":67479},{"bairro":"JUSCELINO KUBITSCHEK","votos":64279},{"bairro":"PLANALTO","votos":59503},{"bairro":"SETOR 04","votos":58508},{"bairro":"COHAB","votos":50535},{"bairro":"FLODOALDO PONTES PINTO","votos":45776},{"bairro":"AREAL","votos":42011},{"bairro":"CIDADE ALTA","votos":40629},{"bairro":"FLORESTA","votos":38923}]},"municipios_estaduais":{"2018":[{"municipio":"PORTO VELHO","votos":1260911},{"municipio":"JI-PARANÁ","votos":337972},{"municipio":"CACOAL","votos":244997},{"municipio":"ARIQUEMES","votos":243824},{"municipio":"VILHENA","votos":220242},{"municipio":"ROLIM DE MOURA","votos":141325},{"municipio":"JARU","votos":138469},{"municipio":"GUAJARÁ-MIRIM","votos":103437},{"municipio":"OURO PRETO DO OESTE","votos":101512},{"municipio":"PIMENTA BUENO","votos":99498},{"municipio":"ESPIGÃO DO OESTE","votos":87682},{"municipio":"BURITIS","votos":79436},{"municipio":"MACHADINHO D OESTE","votos":73441},{"municipio":"ALTA FLORESTA D OESTE","votos":63308},{"municipio":"CANDEIAS DO JAMARI","votos":62643}],"2022":[{"municipio":"PORTO VELHO","votos":1231833},{"municipio":"JI-PARANÁ","votos":321214},{"municipio":"ARIQUEMES","votos":236450},{"municipio":"CACOAL","votos":235750},{"municipio":"VILHENA","votos":224349},{"municipio":"JARU","votos":138826},{"municipio":"ROLIM DE MOURA","votos":134597},{"municipio":"GUAJARÁ-MIRIM","votos":96991},{"municipio":"OURO PRETO DO OESTE","votos":96419},{"municipio":"PIMENTA BUENO","votos":91774},{"municipio":"ESPIGÃO DO OESTE","votos":83223},{"municipio":"MACHADINHO D OESTE","votos":76590},{"municipio":"BURITIS","votos":73519},{"municipio":"ALTA FLORESTA D OESTE","votos":64049},{"municipio":"CANDEIAS DO JAMARI","votos":62479}]},"prefeitos":{"2016":[{"municipio":"JI-PARANÁ","candidato":"JESUALDO","partido":"PSB","votos":9396},{"municipio":"PORTO VELHO","candidato":"HILDON CHAVES","partido":"PSDB","votos":8404},{"municipio":"CEREJEIRAS","candidato":"AIRTON GOMES","partido":"PP","votos":6421},{"municipio":"VILHENA","candidato":"EDUARDO JAPONÊS","partido":"PV","votos":5414},{"municipio":"JARU","candidato":"JOAO GONCALVES JR","partido":"PSDB","votos":5026},{"municipio":"MACHADINHO D OESTE","candidato":"LEOMAR PATRICIO","partido":"PHS","votos":4642},{"municipio":"ALTO ALEGRE DOS PARECIS","candidato":"MARCÃO","partido":"PMDB","votos":4121},{"municipio":"COLORADO DO OESTE","candidato":"PROFESSOR RIBAMAR","partido":"PSB","votos":3863},{"municipio":"ALTO PARAÍSO","candidato":"HELMA AMORIM","partido":"PTB","votos":3700},{"municipio":"MIRANTE DA SERRA","candidato":"ADINALDO DE ANDRADE","partido":"PMDB","votos":3489},{"municipio":"ARIQUEMES","candidato":"THIAGO FLORES","partido":"PMDB","votos":3471},{"municipio":"ALTA FLORESTA D OESTE","candidato":"CARLOS BORGES","partido":"PP","votos":3204},{"municipio":"NOVA BRASILÂNDIA D OESTE","candidato":"HELIO MENDES","partido":"PP","votos":2947},{"municipio":"MINISTRO ANDREAZZA","candidato":"ARNALDO","partido":"PMDB","votos":2819},{"municipio":"SÃO FRANCISCO DO GUAPORÉ","candidato":"GISLAINE LEBRINHA","partido":"PMDB","votos":2622},{"municipio":"VALE DO ANARI","candidato":"ANILDO MADEIREIRO","partido":"PP","votos":2560},{"municipio":"CACOAL","candidato":"GLAUCIONE","partido":"PMDB","votos":2480},{"municipio":"NOVA MAMORÉ","candidato":"PROFESSOR CLAUDIONOR","partido":"PDT","votos":2303},{"municipio":"MONTE NEGRO","candidato":"EVANDRO","partido":"DEM","votos":2258},{"municipio":"VALE DO PARAÍSO","candidato":"CHARLES","partido":"PSDB","votos":2238},{"municipio":"NOVO HORIZONTE DO OESTE","candidato":"PROF CLEITON CHEREGATTO","partido":"PMDB","votos":2206},{"municipio":"SANTA LUZIA D OESTE","candidato":"NELSON DO POSTO","partido":"PP","votos":2160},{"municipio":"ROLIM DE MOURA","candidato":"LUIZAO DO TRENTO","partido":"PSDB","votos":2101},{"municipio":"SÃO MIGUEL DO GUAPORÉ","candidato":"CORNELIO DUARTE","partido":"DEM","votos":2098},{"municipio":"NOVA UNIÃO","candidato":"LUIZ GOMES","partido":"PMDB","votos":2067},{"municipio":"OURO PRETO DO OESTE","candidato":"VAGNO PANISOLY","partido":"PSDC","votos":2019},{"municipio":"TEIXEIRÓPOLIS","candidato":"TONIN","partido":"PT","votos":1993},{"municipio":"ESPIGÃO DO OESTE","candidato":"NILTON CAETANO","partido":"PP","votos":1991},{"municipio":"ALVORADA DO OESTE","candidato":"PROF. WALTER","partido":"PMDB","votos":1980},{"municipio":"URUPÁ","candidato":"CELIO LANG","partido":"PP","votos":1907},{"municipio":"BURITIS","candidato":"RONI IRMAOZINHO","partido":"PDT","votos":1888},{"municipio":"PIMENTA BUENO","candidato":"JULIANA ROQUE","partido":"PSB","votos":1871},{"municipio":"SERINGUEIRAS","candidato":"LEONILDE GARDA","partido":"PDT","votos":1813},{"municipio":"CUJUBIM","candidato":"PEDRO DA BELO HORIZONTE","partido":"PDT","votos":1695},{"municipio":"ITAPUÃ DO OESTE","candidato":"MOISES CAVALHEIRO","partido":"PMDB","votos":1613},{"municipio":"CABIXI","candidato":"SILVENIO DE ALMEIDA","partido":"PMDB","votos":1563},{"municipio":"CANDEIAS DO JAMARI","candidato":"CHICO PERNAMBUCO","partido":"PSB","votos":1448},{"municipio":"THEOBROMA","candidato":"CLAUDIO SANTOS","partido":"PMDB","votos":1439},{"municipio":"PRESIDENTE MÉDICI","candidato":"EDILSON ALENCAR","partido":"PSDB","votos":1437},{"municipio":"COSTA MARQUES","candidato":"MIRANDÃO","partido":"PMN","votos":1417},{"municipio":"RIO CRESPO","candidato":"LEZÃO","partido":"PR","votos":1348},{"municipio":"CORUMBIARA","candidato":"LAERCIO","partido":"PDT","votos":1317},{"municipio":"CHUPINGUAIA","candidato":"DR.. SHEILA","partido":"PV","votos":1282},{"municipio":"GOVERNADOR JORGE TEIXEIRA","candidato":"JOÃO PACIENCIA","partido":"PDT","votos":1203},{"municipio":"CACAULÂNDIA","candidato":"EDIR ALQUIERI","partido":"DEM","votos":1115},{"municipio":"GUAJARÁ-MIRIM","candidato":"RODRIGO","partido":"PDT","votos":1077},{"municipio":"PARECIS","candidato":"LUIZ AMARAL","partido":"PMDB","votos":1040},{"municipio":"SÃO FELIPE D OESTE","candidato":"LÉO SILVA","partido":"PSB","votos":1011},{"municipio":"PIMENTEIRAS DO OESTE","candidato":"VINO","partido":"PDT","votos":921},{"municipio":"PRIMAVERA DE RONDÔNIA","candidato":"EDUARDO BERTOLETTI","partido":"PMDB","votos":895},{"municipio":"CASTANHEIRAS","candidato":"ALCIDES DO SOM","partido":"PSDB","votos":824},{"municipio":"CAMPO NOVO DE RONDÔNIA","candidato":"OSCIMAR","partido":"SD","votos":815}],"2020":[{"municipio":"PORTO VELHO","candidato":"HILDON CHAVES","partido":"PSDB","votos":5628},{"municipio":"JARU","candidato":"JOÃO GONÇALVES JR","partido":"PSDB","votos":5454},{"municipio":"JI-PARANÁ","candidato":"ISAU FONSECA","partido":"MDB","votos":3832},{"municipio":"MACHADINHO D OESTE","candidato":"PAULO DA REMAP","partido":"DEM","votos":3516},{"municipio":"CACOAL","candidato":"ADAILTON FURIA","partido":"PSD","votos":3354},{"municipio":"COLORADO DO OESTE","candidato":"PROF RIBAMAR","partido":"PSB","votos":3322},{"municipio":"MIRANTE DA SERRA","candidato":"EVALDO","partido":"PDT","votos":3146},{"municipio":"VILHENA","candidato":"EDUARDO JAPONÊS","partido":"PV","votos":3053},{"municipio":"PIMENTA BUENO","candidato":"DELEGADO ARAUJO","partido":"PATRIOTA","votos":2842},{"municipio":"VALE DO ANARI","candidato":"ANILDO ALBERTON","partido":"MDB","votos":2662},{"municipio":"CANDEIAS DO JAMARI","candidato":"VALTEIR QUEIROZ","partido":"PATRIOTA","votos":2635},{"municipio":"NOVA BRASILÂNDIA D OESTE","candidato":"HELIO MENDES","partido":"PP","votos":2613},{"municipio":"BURITIS","candidato":"RONI IRMÃOZINHO","partido":"PDT","votos":2459},{"municipio":"NOVA UNIÃO","candidato":"JOÃO LEVI","partido":"PSD","votos":2452},{"municipio":"ALTO ALEGRE DOS PARECIS","candidato":"DENA","partido":"DEM","votos":2442},{"municipio":"COSTA MARQUES","candidato":"MIRANDÃO","partido":"REPUBLICANOS","votos":2436},{"municipio":"OURO PRETO DO OESTE","candidato":"ALEX TESTONI","partido":"DEM","votos":2296},{"municipio":"VALE DO PARAÍSO","candidato":"PROFESSORA POLIANA GASQUI","partido":"PROS","votos":2276},{"municipio":"ALTO PARAÍSO","candidato":"JOÃO PAVAN","partido":"DEM","votos":2168},{"municipio":"NOVO HORIZONTE DO OESTE","candidato":"PROF CLEITON CHEREGATTO","partido":"MDB","votos":2135},{"municipio":"ARIQUEMES","candidato":"CARLA REDANO","partido":"PATRIOTA","votos":1984},{"municipio":"ITAPUÃ DO OESTE","candidato":"MOISES CAVALHEIRO","partido":"MDB","votos":1973},{"municipio":"CABIXI","candidato":"IZAEL","partido":"PP","votos":1888},{"municipio":"MONTE NEGRO","candidato":"IVAIR FERNANDES","partido":"PSD","votos":1881},{"municipio":"SÃO FRANCISCO DO GUAPORÉ","candidato":"TINOCO","partido":"MDB","votos":1817},{"municipio":"SÃO MIGUEL DO GUAPORÉ","candidato":"CORNELIO","partido":"MDB","votos":1788},{"municipio":"SANTA LUZIA D OESTE","candidato":"JURANDIR DE OLIVEIRA","partido":"PODE","votos":1779},{"municipio":"CEREJEIRAS","candidato":"LISETE MARTH","partido":"PV","votos":1738},{"municipio":"SERINGUEIRAS","candidato":"ARMANDO","partido":"MDB","votos":1735},{"municipio":"ROLIM DE MOURA","candidato":"ALDO JULIO","partido":"MDB","votos":1727},{"municipio":"ALTA FLORESTA D OESTE","candidato":"GIO DAMO","partido":"PODE","votos":1699},{"municipio":"MINISTRO ANDREAZZA","candidato":"MILLA DA AGRICULTURA","partido":"PSD","votos":1680},{"municipio":"RIO CRESPO","candidato":"LEZÃO","partido":"PSD","votos":1613},{"municipio":"CUJUBIM","candidato":"PEDRO FERNANDES","partido":"DEM","votos":1541},{"municipio":"SÃO FELIPE D OESTE","candidato":"NEY DA PAIOL","partido":"PSD","votos":1515},{"municipio":"TEIXEIRÓPOLIS","candidato":"TONIN ZOTESSO","partido":"PT","votos":1507},{"municipio":"GOVERNADOR JORGE TEIXEIRA","candidato":"GILMAR TOMAZ","partido":"PP","votos":1425},{"municipio":"URUPÁ","candidato":"CELIO LANG","partido":"PP","votos":1411},{"municipio":"THEOBROMA","candidato":"GILLIARD GOMES","partido":"PSD","votos":1375},{"municipio":"CHUPINGUAIA","candidato":"DOUTORA SHEILA","partido":"DEM","votos":1344},{"municipio":"ESPIGÃO DO OESTE","candidato":"PROFESSOR WELITON","partido":"PODE","votos":1236},{"municipio":"PRESIDENTE MÉDICI","candidato":"EDILSON ALENCAR","partido":"PSDB","votos":1154},{"municipio":"CORUMBIARA","candidato":"LEANDRO DA SAÚDE","partido":"PSB","votos":1129},{"municipio":"ALVORADA DO OESTE","candidato":"VANDERLEI CASA BELA","partido":"PV","votos":1054},{"municipio":"PARECIS","candidato":"MARCONDES DE CARVALHO","partido":"PSB","votos":1047},{"municipio":"CAMPO NOVO DE RONDÔNIA","candidato":"ALEXANDRE DO FORTALEZA","partido":"PDT","votos":978},{"municipio":"NOVA MAMORÉ","candidato":"MARCÉLIO BRASILEIRO","partido":"DEM","votos":973},{"municipio":"PRIMAVERA DE RONDÔNIA","candidato":"EDUARDO BERTOLETTI","partido":"REPUBLICANOS","votos":902},{"municipio":"CASTANHEIRAS","candidato":"CÍCERO GODOI","partido":"PP","votos":635},{"municipio":"GUAJARÁ-MIRIM","candidato":"RAISSA BENTO","partido":"MDB","votos":623},{"municipio":"CACAULÂNDIA","candidato":"DANIELZINHO","partido":"DEM","votos":620},{"municipio":"PIMENTEIRAS DO OESTE","candidato":"VALERIA GARCIA","partido":"PP","votos":598}],"2024":[{"municipio":"JI-PARANÁ","candidato":"AFFONSO CÂNDIDO","partido":"PL","votos":10565},{"municipio":"PORTO VELHO","candidato":"LÉO MORAES","partido":"PODE","votos":7543},{"municipio":"ALTO ALEGRE DOS PARECIS","candidato":"DENA","partido":"UNIÃO","votos":5748},{"municipio":"MACHADINHO D OESTE","candidato":"PAULO DA REMAP","partido":"PL","votos":5496},{"municipio":"ALTO PARAÍSO","candidato":"JOÃO PAVAN","partido":"REPUBLICANOS","votos":5204},{"municipio":"CACOAL","candidato":"ADAILTON FÚRIA","partido":"PSD","votos":5017},{"municipio":"VILHENA","candidato":"DELEGADO FLORI","partido":"PODE","votos":4960},{"municipio":"JARU","candidato":"JEVERSON LIMA","partido":"MDB","votos":4497},{"municipio":"MONTE NEGRO","candidato":"IVAIR FERNANDES","partido":"PSD","votos":4023},{"municipio":"CANDEIAS DO JAMARI","candidato":"LINDOMAR GARÇON","partido":"REPUBLICANOS","votos":3928},{"municipio":"ARIQUEMES","candidato":"CARLA REDANO","partido":"UNIÃO","votos":3913},{"municipio":"MIRANTE DA SERRA","candidato":"NENO ANDRADE","partido":"REPUBLICANOS","votos":3756},{"municipio":"NOVA UNIÃO","candidato":"JOÃO LEVI","partido":"PSD","votos":3275},{"municipio":"COLORADO DO OESTE","candidato":"EDINHO DA RÁDIO","partido":"PL","votos":2933},{"municipio":"SANTA LUZIA D OESTE","candidato":"JURANDIR DE OLIVEIRA","partido":"UNIÃO","votos":2847},{"municipio":"ROLIM DE MOURA","candidato":"ALDO JULIO","partido":"UNIÃO","votos":2800},{"municipio":"CEREJEIRAS","candidato":"SINÉSIO JOSÉ","partido":"UNIÃO","votos":2693},{"municipio":"PIMENTA BUENO","candidato":"PROF . MARCILENE","partido":"PODE","votos":2640},{"municipio":"ITAPUÃ DO OESTE","candidato":"NEI MARTINS","partido":"AVANTE","votos":2631},{"municipio":"BURITIS","candidato":"VALTAIR FRITZ","partido":"PL","votos":2617},{"municipio":"NOVA BRASILÂNDIA D OESTE","candidato":"GINAO DA SAÚDE","partido":"PRTB","votos":2550},{"municipio":"SERINGUEIRAS","candidato":"ARMANDO BERNARDO","partido":"UNIÃO","votos":2394},{"municipio":"SÃO FELIPE D OESTE","candidato":"NEY DA PAIOL","partido":"PSD","votos":2380},{"municipio":"OURO PRETO DO OESTE","candidato":"ALEX TESTONI","partido":"UNIÃO","votos":2344},{"municipio":"NOVA MAMORÉ","candidato":"MARCÉLIO BRASILEIRO","partido":"PL","votos":2282},{"municipio":"SÃO MIGUEL DO GUAPORÉ","candidato":"CRISPIN","partido":"PODE","votos":2270},{"municipio":"CORUMBIARA","candidato":"LEANDRO VIEIRA","partido":"UNIÃO","votos":2245},{"municipio":"SÃO FRANCISCO DO GUAPORÉ","candidato":"ZÉ WELLINGTON","partido":"PL","votos":2187},{"municipio":"ALTA FLORESTA D OESTE","candidato":"GIO DAMO","partido":"UNIÃO","votos":2174},{"municipio":"CHUPINGUAIA","candidato":"DR WESLEY ARAUJO","partido":"PP","votos":2131},{"municipio":"CABIXI","candidato":"SILVANO DE ALMEIDA","partido":"MDB","votos":2090},{"municipio":"CUJUBIM","candidato":"JOAO BECKER","partido":"UNIÃO","votos":2072},{"municipio":"MINISTRO ANDREAZZA","candidato":"MILA DA AGRICULTURA","partido":"PSD","votos":2043},{"municipio":"VALE DO ANARI","candidato":"CLEONE LIMA","partido":"MDB","votos":2043},{"municipio":"THEOBROMA","candidato":"GILLIARD GOMES","partido":"PSD","votos":2010},{"municipio":"ESPIGÃO DO OESTE","candidato":"PROFESSOR WELITON","partido":"PL","votos":1961},{"municipio":"NOVO HORIZONTE DO OESTE","candidato":"RONALDO DELAZARI","partido":"UNIÃO","votos":1830},{"municipio":"COSTA MARQUES","candidato":"DR FABIOMAR","partido":"UNIÃO","votos":1610},{"municipio":"ALVORADA DO OESTE","candidato":"JAIR LUIZ","partido":"UNIÃO","votos":1596},{"municipio":"TEIXEIRÓPOLIS","candidato":"OSMY TOLEDO","partido":"MDB","votos":1585},{"municipio":"GOVERNADOR JORGE TEIXEIRA","candidato":"GILMAR TOMAZ","partido":"PP","votos":1461},{"municipio":"PRESIDENTE MÉDICI","candidato":"SERGIO DO SKINÃO","partido":"PL","votos":1365},{"municipio":"PIMENTEIRAS DO OESTE","candidato":"VALERIA GARCIA","partido":"UNIÃO","votos":1358},{"municipio":"RIO CRESPO","candidato":"EDER PARAGUAI","partido":"PL","votos":1356},{"municipio":"VALE DO PARAÍSO","candidato":"CHARLES GOMES","partido":"PSD","votos":1282},{"municipio":"PARECIS","candidato":"MARCONDES DE CARVALHO","partido":"UNIÃO","votos":1259},{"municipio":"GUAJARÁ-MIRIM","candidato":"NETINHO","partido":"PP","votos":1252},{"municipio":"URUPÁ","candidato":"SALDANHA","partido":"PL","votos":1008},{"municipio":"CACAULÂNDIA","candidato":"DANIELZINHO","partido":"PL","votos":982},{"municipio":"CASTANHEIRAS","candidato":"CICERO GODOI","partido":"PP","votos":964},{"municipio":"PRIMAVERA DE RONDÔNIA","candidato":"LUCAS NUNES","partido":"PL","votos":949},{"municipio":"CAMPO NOVO DE RONDÔNIA","candidato":"ALEXANDRE DO FORTALEZA","partido":"UNIÃO","votos":699}]},"partidos_municipais":{"2016":[{"partido":"PSDB","votos":307130},{"partido":"PMDB","votos":273239},{"partido":"PTB","votos":222135},{"partido":"PSB","votos":197627},{"partido":"PDT","votos":115590},{"partido":"PP","votos":107445},{"partido":"PV","votos":72748},{"partido":"PR","votos":65524},{"partido":"DEM","votos":63549},{"partido":"PT","votos":56971},{"partido":"PRB","votos":56950},{"partido":"PSDC","votos":47375}],"2020":[{"partido":"PSDB","votos":263090},{"partido":"PP","votos":195448},{"partido":"MDB","votos":155160},{"partido":"DEM","votos":134701},{"partido":"PSD","votos":103497},{"partido":"REPUBLICANOS","votos":102218},{"partido":"PODE","votos":94622},{"partido":"PDT","votos":87770},{"partido":"PATRIOTA","votos":77445},{"partido":"PSB","votos":72341},{"partido":"SOLIDARIEDADE","votos":69442},{"partido":"PV","votos":60475}],"2024":[{"partido":"UNIÃO","votos":506841},{"partido":"PODE","votos":327512},{"partido":"PL","votos":278681},{"partido":"PSD","votos":151666},{"partido":"MDB","votos":133091},{"partido":"PP","votos":110633},{"partido":"REPUBLICANOS","votos":103891},{"partido":"PRD","votos":57589},{"partido":"PDT","votos":55816},{"partido":"PRTB","votos":50579},{"partido":"PT","votos":36014},{"partido":"AGIR","votos":32634}]},"bairros_municipais":{"2016":[{"bairro":"CENTRO","votos":301880},{"bairro":"ZONA RURAL","votos":51976},{"bairro":"JUSCELINO KUBITSCHEK","votos":37537},{"bairro":"SETOR 01","votos":34663},{"bairro":"SETOR 02","votos":34491},{"bairro":"FLODOALDO PONTES PINTO","votos":31949},{"bairro":"NOVA BRASILIA","votos":31379},{"bairro":"BNH","votos":28545},{"bairro":"SETOR 03","votos":27020},{"bairro":"BAIRRO CENTRO","votos":26552},{"bairro":"COHAB","votos":24639},{"bairro":"APONIA","votos":23137},{"bairro":"SETOR 04","votos":23013},{"bairro":"ELETRONORTE","votos":21409},{"bairro":"CALADINHO","votos":18624}],"2020":[{"bairro":"CENTRO","votos":259873},{"bairro":"JUSCELINO KUBITSCHEK","votos":33316},{"bairro":"SETOR 02","votos":32832},{"bairro":"SETOR 01","votos":32276},{"bairro":"ZONA RURAL","votos":29697},{"bairro":"NOVA BRASÍLIA","votos":28040},{"bairro":"SETOR 03","votos":26808},{"bairro":"COHAB","votos":25536},{"bairro":"FLODOALDO PONTES PINTO","votos":23882},{"bairro":"BNH","votos":22751},{"bairro":"PLANALTO","votos":22688},{"bairro":"SETOR 04","votos":20758},{"bairro":"ELETRONORTE","votos":19763},{"bairro":"LIBERDADE","votos":19378},{"bairro":"APONIA","votos":19142}],"2024":[{"bairro":"CENTRO","votos":286159},{"bairro":"SETOR 02","votos":38708},{"bairro":"JUSCELINO KUBITSCHEK","votos":38690},{"bairro":"SETOR 01","votos":38154},{"bairro":"FLODOALDO PONTES PINTO","votos":33675},{"bairro":"ZONA RURAL","votos":32759},{"bairro":"NOVA BRASÍLIA","votos":32268},{"bairro":"SETOR 03","votos":28439},{"bairro":"EMBRATEL","votos":28272},{"bairro":"COHAB","votos":27859},{"bairro":"BNH","votos":27336},{"bairro":"SETOR 04","votos":25896},{"bairro":"PLANALTO","votos":23780},{"bairro":"LAGOA","votos":23497},{"bairro":"ELETRONORTE","votos":22488}]},"municipios_municipais":{"2016":[{"municipio":"PORTO VELHO","votos":664120},{"municipio":"JI-PARANÁ","votos":123062},{"municipio":"VILHENA","votos":94002},{"municipio":"ARIQUEMES","votos":86594},{"municipio":"CACOAL","votos":84067},{"municipio":"JARU","votos":54052},{"municipio":"ROLIM DE MOURA","votos":46624},{"municipio":"PIMENTA BUENO","votos":38245},{"municipio":"OURO PRETO DO OESTE","votos":37425},{"municipio":"ESPIGÃO DO OESTE","votos":33151},{"municipio":"MACHADINHO D OESTE","votos":32267},{"municipio":"GUAJARÁ-MIRIM","votos":29756},{"municipio":"BURITIS","votos":27133},{"municipio":"CANDEIAS DO JAMARI","votos":26795},{"municipio":"ALTA FLORESTA D OESTE","votos":25902}],"2020":[{"municipio":"PORTO VELHO","votos":632964},{"municipio":"JI-PARANÁ","votos":112057},{"municipio":"CACOAL","votos":83629},{"municipio":"VILHENA","votos":80759},{"municipio":"ARIQUEMES","votos":79930},{"municipio":"ROLIM DE MOURA","votos":48553},{"municipio":"JARU","votos":46789},{"municipio":"OURO PRETO DO OESTE","votos":38325},{"municipio":"GUAJARÁ-MIRIM","votos":37215},{"municipio":"PIMENTA BUENO","votos":29294},{"municipio":"MACHADINHO D OESTE","votos":29028},{"municipio":"BURITIS","votos":27321},{"municipio":"ESPIGÃO DO OESTE","votos":26584},{"municipio":"ALTA FLORESTA D OESTE","votos":25835},{"municipio":"CANDEIAS DO JAMARI","votos":24504}],"2024":[{"municipio":"PORTO VELHO","votos":739234},{"municipio":"JI-PARANÁ","votos":133071},{"municipio":"ARIQUEMES","votos":96825},{"municipio":"CACOAL","votos":95054},{"municipio":"VILHENA","votos":86932},{"municipio":"JARU","votos":57905},{"municipio":"ROLIM DE MOURA","votos":54013},{"municipio":"GUAJARÁ-MIRIM","votos":41850},{"municipio":"OURO PRETO DO OESTE","votos":40372},{"municipio":"PIMENTA BUENO","votos":39128},{"municipio":"ESPIGÃO DO OESTE","votos":33823},{"municipio":"MACHADINHO D OESTE","votos":33630},{"municipio":"BURITIS","votos":31313},{"municipio":"CANDEIAS DO JAMARI","votos":30367},{"municipio":"NOVA MAMORÉ","votos":29652}]},"partidos_eleitos":{"2016":[{"partido":"PMDB","prefeitos":14},{"partido":"PDT","prefeitos":8},{"partido":"PP","prefeitos":7},{"partido":"PSDB","prefeitos":6},{"partido":"PSB","prefeitos":5},{"partido":"DEM","prefeitos":3},{"partido":"PV","prefeitos":2},{"partido":"PTB","prefeitos":1},{"partido":"SD","prefeitos":1},{"partido":"PMN","prefeitos":1}],"2020":[{"partido":"MDB","prefeitos":9},{"partido":"DEM","prefeitos":8},{"partido":"PSD","prefeitos":7},{"partido":"PP","prefeitos":6},{"partido":"PODE","prefeitos":3},{"partido":"PV","prefeitos":3},{"partido":"PATRIOTA","prefeitos":3},{"partido":"PDT","prefeitos":3},{"partido":"PSB","prefeitos":3},{"partido":"PSDB","prefeitos":3}],"2024":[{"partido":"UNIÃO","prefeitos":16},{"partido":"PL","prefeitos":12},{"partido":"PSD","prefeitos":7},{"partido":"MDB","prefeitos":4},{"partido":"PP","prefeitos":4},{"partido":"PODE","prefeitos":4},{"partido":"REPUBLICANOS","prefeitos":3},{"partido":"AVANTE","prefeitos":1},{"partido":"PRTB","prefeitos":1}]},"resumo":{"estaduais":{"2018":{"total_votos":4329124,"municipios":52,"candidatos":448},"2022":{"total_votos":4213454,"municipios":52,"candidatos":553}},"municipais":{"2016":{"municipios":52,"total_votos":130932},"2020":{"municipios":52,"total_votos":105090},"2024":{"municipios":52,"total_votos":142818}}}};
+
+  const PARTY_COLORS = {"PT": "#e3b341", "PSDB": "#58a6ff", "MDB": "#a5a0f0", "PMDB": "#a5a0f0", "PP": "#3fb950", "PL": "#f85149", "PODE": "#f0883e", "UNI\u00c3O": "#39d353", "DEM": "#58a6ff", "PSB": "#e3b341", "PDT": "#3fb950", "PSD": "#a5a0f0", "REPUBLICANOS": "#f0883e", "PV": "#3fb950", "PSL": "#58a6ff", "PATRIOTA": "#f85149", "AVANTE": "#e3b341", "PSDC": "#a5a0f0", "SD": "#f0883e", "PTB": "#58a6ff", "REDE": "#3fb950", "PSC": "#a5a0f0"};
+
+  function getPartyColor(p) {
+    return PARTY_COLORS[p] || '#8b949e';
+  }
+
+  function fmtVotos(n) {
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n/1000).toFixed(1) + 'k';
+    return n.toLocaleString('pt-BR');
+  }
+
+  // State
+  let histMuniYear = 2024;
+  let histEstYear = 2022;
+  let histEstCargo = 'Senador';
+
+  function switchHistTab(tab, el) {
+    document.querySelectorAll('#hist-main-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.hist-section').forEach(s => s.style.display = 'none');
+    document.getElementById('hist-' + tab).style.display = 'block';
+  }
+
+  function switchMuniYear(year, el) {
+    document.querySelectorAll('#hist-muni-year-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    histMuniYear = year;
+    renderMuniAll();
+  }
+
+  function switchEstYear(year, el) {
+    document.querySelectorAll('#hist-est-year-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    histEstYear = year;
+    renderEstAll();
+  }
+
+  function switchEstCargo(cargo, el) {
+    document.querySelectorAll('#hist-est-cargo-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    histEstCargo = cargo;
+    renderEstAll();
+  }
+
+  function renderMuniTable() {
+    const search = (document.getElementById('hist-muni-search')?.value || '').toUpperCase();
+    const rows = HIST_DATA.prefeitos[String(histMuniYear)] || [];
+    const filtered = rows.filter(r => !search || r.municipio.includes(search) || r.candidato.includes(search) || r.partido.includes(search));
+    document.getElementById('hist-muni-count').textContent = filtered.length + ' municípios';
+    const tbody = document.getElementById('hist-muni-tbody');
+    tbody.innerHTML = filtered.map((r, i) => {
+      const col = getPartyColor(r.partido);
+      return `<tr>
+        <td style="color:var(--text3);font-weight:700">${i+1}</td>
+        <td><strong>${r.municipio}</strong></td>
+        <td>${r.candidato}</td>
+        <td><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${r.partido}</span></td>
+        <td style="font-weight:600;color:var(--green)">${r.votos.toLocaleString('pt-BR')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderPartiesChart(containerId, legendId, parties) {
+    const max = parties[0]?.prefeitos || parties[0]?.votos || 1;
+    const isCount = 'prefeitos' in (parties[0] || {});
+    const container = document.getElementById(containerId);
+    const legend = document.getElementById(legendId);
+    if (!container) return;
+
+    container.innerHTML = parties.slice(0,8).map(p => {
+      const val = isCount ? p.prefeitos : p.votos;
+      const pct = Math.round((val / (isCount ? parties[0].prefeitos : parties[0].votos)) * 100);
+      const col = getPartyColor(p.partido);
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="width:48px;font-size:11px;font-weight:700;color:${col};text-align:right;flex-shrink:0">${p.partido}</div>
+        <div style="flex:1;height:18px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${col};border-radius:3px;transition:width 0.6s"></div>
+        </div>
+        <div style="width:36px;font-size:11px;font-weight:700;color:var(--text);text-align:right">${val}</div>
+      </div>`;
+    }).join('');
+
+    if (legend) legend.innerHTML = '';
+  }
+
+  function renderRankList(containerId, items, keyProp, valProp, maxVal) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const top = items.slice(0, 10);
+    const m = maxVal || top[0]?.[valProp] || 1;
+    el.innerHTML = top.map((item, i) => {
+      const pct = Math.round((item[valProp] / m) * 100);
+      const colors = ['var(--green)','var(--blue)','var(--purple)','var(--yellow)','var(--orange)','var(--teal)','var(--red)','var(--green)','var(--blue)','var(--purple)'];
+      const col = colors[i % colors.length];
+      return `<div class="rank-item">
+        <div class="rank-pos">${i+1}</div>
+        <div class="rank-bar-wrap">
+          <div class="person-name" style="font-size:11px">${item[keyProp]}</div>
+          <div class="rank-bar"><div class="rank-fill" style="width:${pct}%;background:${col}"></div></div>
+        </div>
+        <div class="rank-pts">${fmtVotos(item[valProp])}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderMuniAll() {
+    renderMuniTable();
+    const parties = HIST_DATA.partidos_eleitos[String(histMuniYear)] || [];
+    renderPartiesChart('hist-muni-parties-chart', 'hist-muni-parties-legend', parties);
+    const munis = HIST_DATA.municipios_municipais[String(histMuniYear)] || [];
+    renderRankList('hist-muni-topmuni', munis, 'municipio', 'votos');
+    const bairros = HIST_DATA.bairros_municipais[String(histMuniYear)] || [];
+    renderRankList('hist-muni-topbairro', bairros, 'bairro', 'votos');
+  }
+
+  function renderEstAll() {
+    const cands = HIST_DATA.estaduais[String(histEstYear)]?.[histEstCargo] || [];
+    document.getElementById('hist-est-table-title').textContent =
+      `🏅 Top Candidatos — ${histEstCargo} ${histEstYear}`;
+    const tbody = document.getElementById('hist-est-tbody');
+    tbody.innerHTML = cands.slice(0, 20).map((c, i) => {
+      const isEleito = c.status === 'ELEITO';
+      const col = getPartyColor(c.partido);
+      return `<tr>
+        <td style="color:var(--text3);font-weight:700">${i+1}</td>
+        <td style="font-weight:500">${c.nome}</td>
+        <td><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${c.partido}</span></td>
+        <td style="font-weight:600">${c.votos.toLocaleString('pt-BR')}</td>
+        <td><span class="badge ${isEleito ? 'badge-green' : 'badge-gray'}">${isEleito ? '✅ Eleito' : 'Não eleito'}</span></td>
+      </tr>`;
+    }).join('');
+
+    const parties = HIST_DATA.partidos_estaduais[String(histEstYear)] || [];
+    renderPartiesChart('hist-est-parties', null, parties.map(p => ({...p, prefeitos: p.votos})));
+
+    const munis = HIST_DATA.municipios_estaduais[String(histEstYear)] || [];
+    renderRankList('hist-est-topmuni', munis, 'municipio', 'votos');
+    const bairros = HIST_DATA.bairros_estaduais[String(histEstYear)] || [];
+    renderRankList('hist-est-topbairro', bairros, 'bairro', 'votos');
+  }
+
+  // Init historical data when module opens
+  const _origShowModule = showModule;
+  function showModule(id, el) {
+    _origShowModule(id, el);
+    if (id === 'historico') {
+      renderMuniAll();
+      renderEstAll();
+    }
+  }
+
 </script>
 </body>
 </html>
