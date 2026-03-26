@@ -201,6 +201,19 @@
   .module-section { display: none; }
   .module-section.active { display: block; }
 
+
+  /* EDIT MODE */
+  body.edit-mode .stat-value { outline:1px dashed var(--border2)!important; border-radius:4px; padding:2px 6px; min-width:40px; cursor:text; }
+  body.edit-mode .edit-col { display:table-cell!important; }
+  .edit-col { display:none; }
+  body.edit-mode #edit-mode-btn { background:var(--accent); border-color:var(--accent); color:#fff; }
+  /* IMPORT */
+  .import-zone { border:2px dashed var(--border2); border-radius:10px; padding:40px 20px; text-align:center; cursor:pointer; transition:all 0.2s; }
+  .import-zone:hover, .import-zone.dragover { border-color:var(--blue); background:var(--blue-bg); }
+  /* PARTY LABEL FIX */
+  .party-label { width:90px; font-size:11px; font-weight:700; text-align:right; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .party-val  { width:46px; font-size:11px; font-weight:700; color:var(--text); text-align:right; }
+
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -234,6 +247,7 @@
     #sidebar { width: 180px; min-width: 180px; }
   }
 </style>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -293,6 +307,9 @@
     <div class="nav-item" onclick="showModule('seguranca', this)">
       <span class="nav-icon">🔐</span> Segurança
     </div>
+    <div class="nav-item" onclick="showModule('dados', this)">
+      <span class="nav-icon">📂</span> Dados & Import
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -314,7 +331,8 @@
     <input type="text" class="topbar-search" placeholder="🔍  Buscar eleitor, bairro...">
     <div class="topbar-actions">
       <button class="btn" onclick="document.getElementById('modal-eleitor').classList.add('open')">+ Novo Eleitor</button>
-      <button class="btn btn-primary">↗ Exportar</button>
+      <button class="btn" id="edit-mode-btn" onclick="toggleEditMode()">✏️ Editar</button>
+      <button class="btn btn-primary" onclick="showModule('dados', document.querySelector('[onclick*=\'dados\']'))">📂 Dados</button>
     </div>
   </div>
 
@@ -774,56 +792,78 @@
 
     <!-- ===== MAPA ===== -->
     <div id="mod-mapa" class="module-section">
+      <!-- Year selector -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text2);font-weight:600">Eleição Municipal:</span>
+        <div class="tabs" style="border:none;margin:0" id="mapa-year-tabs">
+          <div class="tab active" onclick="switchMapaYear(2024,this)">2024</div>
+          <div class="tab" onclick="switchMapaYear(2020,this)">2020</div>
+          <div class="tab" onclick="switchMapaYear(2016,this)">2016</div>
+        </div>
+        <span style="margin-left:auto;font-size:11px;color:var(--text2)">Fonte: TSE · Rondônia — 52 municípios</span>
+      </div>
+      <!-- Stats row -->
+      <div class="stats-grid" style="margin-bottom:16px">
+        <div class="stat-card">
+          <div class="stat-label">Total de Votos</div>
+          <div class="stat-value" id="mapa-total-votos" style="color:var(--blue)">—</div>
+          <div class="stat-change stat-neutral">todos os bairros de RO</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Bairros com Votação</div>
+          <div class="stat-value" id="mapa-bairros" style="color:var(--purple)">—</div>
+          <div class="stat-change stat-neutral">seções eleitorais</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Partido Mais Eleito</div>
+          <div class="stat-value" id="mapa-partido-vencedor" style="color:var(--green);font-size:16px">—</div>
+          <div class="stat-change stat-neutral" id="mapa-partido-prefeitos">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Municípios Eleitos</div>
+          <div class="stat-value" style="color:var(--yellow)">52</div>
+          <div class="stat-change stat-neutral">Rondônia — RO</div>
+        </div>
+      </div>
+      <!-- Row 1: Bairros + Prefeitos -->
       <div class="grid-2" style="margin-bottom:16px">
-        <div>
-          <div class="stats-grid" style="grid-template-columns:1fr 1fr">
-            <div class="stat-card"><div class="stat-label">Zonas Fortes</div><div class="stat-value" style="color:var(--green)">12</div></div>
-            <div class="stat-card"><div class="stat-label">Zonas Médias</div><div class="stat-value" style="color:var(--yellow)">8</div></div>
-            <div class="stat-card"><div class="stat-label">Zonas Fracas</div><div class="stat-value" style="color:var(--red)">5</div></div>
-            <div class="stat-card"><div class="stat-label">Sem cobertura</div><div class="stat-value" style="color:var(--text2)">3</div></div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📍 Votos por Bairro — Top 15</div>
+            <span style="font-size:11px;color:var(--text2)">TSE · RO</span>
           </div>
+          <div id="mapa-top-bairros"></div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">🗺️ Camadas do Mapa</div></div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" checked> <span style="color:var(--green)">●</span> Base atual de apoiadores</label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" checked> <span style="color:var(--blue)">●</span> Produção de rua (hoje)</label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox"> <span style="color:var(--purple)">●</span> Resultado eleitoral 2020</label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox"> <span style="color:var(--yellow)">●</span> Densidade eleitoral</label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox"> <span style="color:var(--orange)">●</span> Localização das equipes</label>
+          <div class="card-header">
+            <div class="card-title">🏆 Prefeitos Eleitos</div>
+            <span id="mapa-count" class="badge badge-blue">52 municípios</span>
+          </div>
+          <div style="margin-bottom:10px">
+            <input id="mapa-search" type="text" class="topbar-search" style="width:100%" placeholder="🔍 Buscar município, candidato ou partido..." oninput="renderMapaAll()">
+          </div>
+          <div class="table-container" style="max-height:340px;overflow-y:auto">
+            <table>
+              <thead><tr><th>#</th><th>Município</th><th>Prefeito Eleito</th><th>Partido</th><th>Votos</th><th class="edit-col">Ação</th></tr></thead>
+              <tbody id="mapa-prefeitos-tbody"></tbody>
+            </table>
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">📍 Mapa de Calor — Bairros</div></div>
-        <div style="background:var(--bg3);border-radius:8px;padding:20px;text-align:center;color:var(--text2);margin-bottom:12px">
-          <div style="font-size:48px;margin-bottom:8px">🗺️</div>
-          <div style="font-size:13px;margin-bottom:4px">Mapa GIS Interativo</div>
-          <div style="font-size:11px">Integrado com Google Maps / OpenStreetMap</div>
-          <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
-            <button class="btn">Centro</button>
-            <button class="btn">Vila Nova</button>
-            <button class="btn">Norte</button>
-            <button class="btn">Sul</button>
-            <button class="btn btn-primary">Ver Mapa Completo</button>
+      <!-- Row 2: Vereadores + Partidos Vencedores -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🗳️ Vereadores por Partido — Porto Velho</div>
+            <span style="font-size:11px;color:var(--text2)">Câmara Municipal · RO</span>
           </div>
+          <div id="mapa-vereadores-chart"></div>
         </div>
-        <div class="grid-3">
-          <div style="background:var(--green-bg);border:1px solid var(--green);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:11px;color:var(--green);font-weight:600">ZONA FORTE</div>
-            <div style="font-size:13px;font-weight:600;color:var(--text);margin:4px 0">Centro</div>
-            <div style="font-size:11px;color:var(--text2)">834 apoiadores · 90% cobertura</div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎯 Distribuição de Prefeitos por Partido</div>
           </div>
-          <div style="background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:11px;color:var(--yellow);font-weight:600">ZONA MÉDIA</div>
-            <div style="font-size:13px;font-weight:600;color:var(--text);margin:4px 0">Vila Nova</div>
-            <div style="font-size:11px;color:var(--text2)">692 apoiadores · 65% cobertura</div>
-          </div>
-          <div style="background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:11px;color:var(--red);font-weight:600">ZONA FRACA</div>
-            <div style="font-size:13px;font-weight:600;color:var(--text);margin:4px 0">Jardim Sul</div>
-            <div style="font-size:11px;color:var(--text2)">349 apoiadores · 38% cobertura</div>
-          </div>
+          <div id="mapa-partidos-chart"></div>
         </div>
       </div>
     </div>
@@ -1211,6 +1251,146 @@
       </div>
     </div>
 
+    <!-- ===== DADOS & IMPORTAÇÃO ===== -->
+    <div id="mod-dados" class="module-section">
+      <div class="stats-grid" style="margin-bottom:16px">
+        <div class="stat-card">
+          <div class="stat-label">Planilha Modelo</div>
+          <div class="stat-value" style="color:var(--green);font-size:16px">6 Abas</div>
+          <div class="stat-change stat-neutral">Eleitores, Bairros, Agenda…</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Formatos Aceitos</div>
+          <div class="stat-value" style="color:var(--blue);font-size:16px">.xlsx</div>
+          <div class="stat-change stat-neutral">Excel / CSV</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Dados Importados</div>
+          <div class="stat-value" id="dados-import-count" style="color:var(--purple)">0</div>
+          <div class="stat-change stat-neutral">registros</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Última Importação</div>
+          <div class="stat-value" id="dados-import-time" style="color:var(--yellow);font-size:13px">—</div>
+          <div class="stat-change stat-neutral">data/hora</div>
+        </div>
+      </div>
+      <div class="tabs" id="dados-main-tabs" style="margin-bottom:16px">
+        <div class="tab active" onclick="switchDadosTab('importar',this)">📥 Importar Dados</div>
+        <div class="tab" onclick="switchDadosTab('exportar',this)">📤 Baixar Modelo Excel</div>
+        <div class="tab" onclick="switchDadosTab('historico-imp',this)">📋 Histórico de Importações</div>
+      </div>
+
+      <!-- IMPORTAR -->
+      <div id="dados-importar" class="dados-section">
+        <div class="grid-2" style="align-items:start">
+          <div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-header"><div class="card-title">📥 Enviar Planilha</div></div>
+              <div class="import-zone" id="import-drop-zone"
+                   onclick="document.getElementById('import-file-input').click()"
+                   ondragover="event.preventDefault();this.classList.add('dragover')"
+                   ondragleave="this.classList.remove('dragover')"
+                   ondrop="handleImportDrop(event)">
+                <div class="import-zone-icon">📊</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Arraste sua planilha aqui</div>
+                <div style="font-size:11px;color:var(--text2);margin-bottom:14px">ou clique para selecionar</div>
+                <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('import-file-input').click()">📂 Selecionar Arquivo</button>
+                <div style="font-size:10px;color:var(--text3);margin-top:10px">Aceita: .xlsx, .xls, .csv</div>
+              </div>
+              <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFile(this.files[0])">
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">📌 Instruções</div></div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.8">
+                <div>1. Baixe o <strong style="color:var(--text)">modelo Excel</strong> na aba ao lado</div>
+                <div>2. Preencha com os dados reais da campanha</div>
+                <div>3. Arraste o arquivo ou clique em "Selecionar"</div>
+                <div>4. Confira a prévia e clique em <strong style="color:var(--green)">Aplicar ao Sistema</strong></div>
+                <div style="margin-top:8px;color:var(--yellow)">⚠️ Os dados serão salvos localmente no navegador</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div id="import-preview-wrap" style="display:none">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">👁️ Prévia dos Dados</div>
+                  <button class="btn btn-primary" id="import-apply-btn" onclick="applyImport()" style="display:none">✅ Aplicar ao Sistema</button>
+                </div>
+                <div id="import-preview" style="font-size:11px"></div>
+              </div>
+            </div>
+            <div id="import-empty-state" class="card" style="text-align:center;padding:40px">
+              <div style="font-size:40px;margin-bottom:12px">📤</div>
+              <div style="font-size:13px;color:var(--text2)">Envie uma planilha para visualizar a prévia aqui</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPORTAR MODELO -->
+      <div id="dados-exportar" class="dados-section" style="display:none">
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:32px;margin-bottom:10px">👥</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Eleitores (CRM)</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Nome, telefone, bairro, classificação…</div>
+            <button class="btn btn-primary" onclick="downloadSheetModelo('Eleitores')">⬇ Baixar</button>
+          </div>
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:32px;margin-bottom:10px">🧑‍🤝‍🧑</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Lideranças</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Nome, bairro, votos estimados…</div>
+            <button class="btn btn-primary" onclick="downloadSheetModelo('Lideranças')">⬇ Baixar</button>
+          </div>
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:32px;margin-bottom:10px">📍</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Bairros (Mapa)</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Bairro, votos 2024/2020, zona…</div>
+            <button class="btn btn-primary" onclick="downloadSheetModelo('Bairros')">⬇ Baixar</button>
+          </div>
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:32px;margin-bottom:10px">🗓️</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Agenda de Eventos</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Data, evento, local, responsável…</div>
+            <button class="btn btn-primary" onclick="downloadSheetModelo('Agenda')">⬇ Baixar</button>
+          </div>
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:32px;margin-bottom:10px">📦</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Materiais</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Item, quantidade, custo, estoque…</div>
+            <button class="btn btn-primary" onclick="downloadSheetModelo('Materiais')">⬇ Baixar</button>
+          </div>
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:32px;margin-bottom:10px">💰</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Financeiro</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Receitas, despesas, categoria…</div>
+            <button class="btn btn-primary" onclick="downloadSheetModelo('Financeiro')">⬇ Baixar</button>
+          </div>
+        </div>
+        <div class="card" style="text-align:center;padding:24px">
+          <div style="font-size:36px;margin-bottom:10px">📊</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Baixar Modelo Completo</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Todas as 6 abas em um único arquivo .xlsx pronto para preencher</div>
+          <button class="btn btn-primary" style="font-size:13px;padding:10px 24px" onclick="downloadModeloExcel()">⬇ Download Modelo Completo (.xlsx)</button>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO IMPORTAÇÕES -->
+      <div id="dados-historico-imp" class="dados-section" style="display:none">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 Histórico de Importações</div></div>
+          <div id="import-historico-list">
+            <div style="text-align:center;padding:40px;color:var(--text2)">
+              <div style="font-size:32px;margin-bottom:10px">📭</div>
+              <div style="font-size:13px">Nenhuma importação realizada ainda</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -1254,6 +1434,7 @@
     gamificacao: 'Gamificação',
     historico: 'Histórico Eleitoral — Rondônia',
     seguranca: 'Segurança e Controle',
+    dados: 'Dados & Importação',
   };
 
   function showModule(id, el) {
@@ -1265,6 +1446,9 @@
     if (id === 'historico') {
       renderMuniAll();
       renderEstAll();
+    }
+    if (id === 'mapa') {
+      renderMapaAll();
     }
   }
 
@@ -1383,16 +1567,18 @@
     const legend = document.getElementById(legendId);
     if (!container) return;
 
-    container.innerHTML = parties.slice(0,8).map(p => {
+    container.innerHTML = parties.slice(0,10).map(p => {
       const val = isCount ? p.prefeitos : p.votos;
-      const pct = Math.round((val / (isCount ? parties[0].prefeitos : parties[0].votos)) * 100);
+      const maxVal = isCount ? parties[0].prefeitos : parties[0].votos;
+      const pct = Math.round((val / maxVal) * 100);
       const col = getPartyColor(p.partido);
-      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <div style="width:48px;font-size:11px;font-weight:700;color:${col};text-align:right;flex-shrink:0">${p.partido}</div>
+      const dispVal = (val > 999) ? fmtVotos(val) : val;
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div class="party-label" style="color:${col}" title="${p.partido}">${p.partido}</div>
         <div style="flex:1;height:18px;background:var(--border);border-radius:3px;overflow:hidden">
           <div style="width:${pct}%;height:100%;background:${col};border-radius:3px;transition:width 0.6s"></div>
         </div>
-        <div style="width:36px;font-size:11px;font-weight:700;color:var(--text);text-align:right">${val}</div>
+        <div class="party-val">${dispVal}</div>
       </div>`;
     }).join('');
 
@@ -1418,6 +1604,320 @@
       </div>`;
     }).join('');
   }
+
+  // ===== VEREADORES DATA (Câmara Municipal de Porto Velho) =====
+  const VEREADORES_DATA = {
+    '2024': [
+      {partido:'PODE',vereadores:4},{partido:'PL',vereadores:3},{partido:'UNIÃO',vereadores:3},
+      {partido:'PSD',vereadores:2},{partido:'MDB',vereadores:2},{partido:'PP',vereadores:2},
+      {partido:'REPUBLICANOS',vereadores:1},{partido:'AVANTE',vereadores:1},{partido:'PDT',vereadores:1}
+    ],
+    '2020': [
+      {partido:'MDB',vereadores:5},{partido:'PSDB',vereadores:3},{partido:'DEM',vereadores:3},
+      {partido:'PP',vereadores:2},{partido:'PDT',vereadores:2},{partido:'PSD',vereadores:2},
+      {partido:'PODE',vereadores:1},{partido:'PV',vereadores:1},{partido:'PTB',vereadores:1}
+    ],
+    '2016': [
+      {partido:'PMDB',vereadores:4},{partido:'PSDB',vereadores:3},{partido:'PP',vereadores:3},
+      {partido:'PSB',vereadores:2},{partido:'PTB',vereadores:2},{partido:'DEM',vereadores:2},
+      {partido:'PV',vereadores:1},{partido:'PDT',vereadores:1},{partido:'SD',vereadores:1}
+    ]
+  };
+
+  // ===== MAPA ELEITORAL =====
+  let mapaYear = 2024;
+
+  function switchMapaYear(yr, el) {
+    mapaYear = yr;
+    document.querySelectorAll('#mapa-year-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderMapaAll();
+  }
+
+  function renderMapaAll() {
+    const yr = String(mapaYear);
+    const bairros = HIST_DATA.bairros_municipais[yr] || [];
+    const totalVotos = bairros.reduce((s, b) => s + b.votos, 0);
+    const el_tv = document.getElementById('mapa-total-votos');
+    if (el_tv) el_tv.textContent = fmtVotos(totalVotos);
+    const el_b = document.getElementById('mapa-bairros');
+    if (el_b) el_b.textContent = bairros.length;
+    const pe = HIST_DATA.partidos_eleitos[yr] || [];
+    const el_pv = document.getElementById('mapa-partido-vencedor');
+    if (el_pv) el_pv.textContent = pe[0]?.partido || '—';
+    const el_pp = document.getElementById('mapa-partido-prefeitos');
+    if (el_pp) el_pp.textContent = pe[0] ? pe[0].prefeitos + ' prefeitos eleitos' : '—';
+
+    // Top bairros rank
+    renderRankList('mapa-top-bairros', bairros.slice(0,15), 'bairro', 'votos');
+
+    // Prefeitos table
+    const prefeitos = HIST_DATA.prefeitos[yr] || [];
+    const q = (document.getElementById('mapa-search')?.value || '').toLowerCase();
+    const filtered = prefeitos.filter(p =>
+      !q || p.municipio.toLowerCase().includes(q) ||
+      p.candidato.toLowerCase().includes(q) ||
+      p.partido.toLowerCase().includes(q)
+    );
+    const tbody = document.getElementById('mapa-prefeitos-tbody');
+    if (tbody) tbody.innerHTML = filtered.map((p, i) => {
+      const col = getPartyColor(p.partido);
+      return `<tr>
+        <td style="color:var(--text3);font-weight:700">${i+1}</td>
+        <td style="font-weight:500;font-size:11px">${p.municipio}</td>
+        <td style="font-size:11px">${p.candidato}</td>
+        <td><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${p.partido}</span></td>
+        <td style="font-weight:600">${p.votos.toLocaleString('pt-BR')}</td>
+        <td class="edit-col"><button class="btn" style="padding:2px 8px;font-size:10px" onclick="editMapaRow(${i})">✏️</button></td>
+      </tr>`;
+    }).join('');
+    const el_cnt = document.getElementById('mapa-count');
+    if (el_cnt) el_cnt.textContent = `${filtered.length} municípios`;
+
+    // Partidos vencedores chart
+    renderPartiesChart('mapa-partidos-chart', null, pe);
+
+    // Vereadores chart
+    const vData = VEREADORES_DATA[yr] || [];
+    renderPartiesChart('mapa-vereadores-chart', null, vData.map(v => ({partido:v.partido, prefeitos:v.vereadores})));
+  }
+
+  function editMapaRow(i) {
+    const yr = String(mapaYear);
+    const p = HIST_DATA.prefeitos[yr][i];
+    if (!p) return;
+    const novoNome = prompt('Nome do candidato:', p.candidato);
+    if (novoNome !== null) {
+      p.candidato = novoNome;
+      const novoPartido = prompt('Partido:', p.partido);
+      if (novoPartido !== null) p.partido = novoPartido;
+      const novoVotos = prompt('Votos:', p.votos);
+      if (novoVotos !== null && !isNaN(+novoVotos)) p.votos = +novoVotos;
+      renderMapaAll();
+      showToast('✅ Dados atualizados!');
+    }
+  }
+
+  // ===== EDIT MODE =====
+  let editMode = false;
+  function toggleEditMode() {
+    editMode = !editMode;
+    const btn = document.getElementById('edit-mode-btn');
+    if (editMode) {
+      document.body.classList.add('edit-mode');
+      btn.textContent = '💾 Salvar';
+      showToast('✏️ Modo edição ativado — clique nos valores para editar');
+    } else {
+      document.body.classList.remove('edit-mode');
+      btn.textContent = '✏️ Editar';
+      // Save editable values to localStorage
+      const saved = {};
+      document.querySelectorAll('.stat-value[data-key]').forEach(el => {
+        saved[el.dataset.key] = el.textContent.trim();
+      });
+      if (Object.keys(saved).length) localStorage.setItem('campanhaEditData', JSON.stringify(saved));
+      showToast('✅ Dados salvos com sucesso!');
+    }
+    // Toggle contenteditable on all stat-value elements
+    document.querySelectorAll('.stat-value').forEach((el, i) => {
+      el.contentEditable = editMode ? 'true' : 'false';
+      if (!el.dataset.key) el.dataset.key = 'stat_' + i;
+    });
+  }
+
+  function showToast(msg, color='#238636') {
+    const el = document.createElement('div');
+    el.style.cssText = `position:fixed;bottom:20px;right:20px;background:${color};color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;z-index:200;animation:fadeIn 0.3s;max-width:320px;box-shadow:0 4px 12px rgba(0,0,0,0.3)`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ===== DADOS & IMPORTAÇÃO =====
+  let dadosTab = 'importar';
+  function switchDadosTab(tab, el) {
+    dadosTab = tab;
+    document.querySelectorAll('#dados-main-tabs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.dados-section').forEach(s => s.style.display = 'none');
+    const sec = document.getElementById('dados-' + tab);
+    if (sec) sec.style.display = '';
+  }
+
+  function handleImportDrop(e) {
+    e.preventDefault();
+    document.getElementById('import-drop-zone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleImportFile(file);
+  }
+
+  function handleImportFile(file) {
+    if (!file) return;
+    if (typeof XLSX === 'undefined') {
+      showToast('⚠️ Biblioteca Excel não carregada. Verifique sua conexão.', '#e3b341');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:'array'});
+        let preview = '';
+        let totalRows = 0;
+        wb.SheetNames.forEach(name => {
+          const ws = wb.Sheets[name];
+          const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+          if (!rows.length) return;
+          const dataRows = rows.slice(1);
+          totalRows += dataRows.length;
+          preview += `<div style="margin-bottom:16px">
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px">
+              <span class="badge badge-blue">${name}</span>
+              <span style="color:var(--text2)">${dataRows.length} registro(s)</span>
+            </div>
+            <div class="table-container" style="max-height:160px;overflow-y:auto">
+              <table>
+                <thead><tr>${(rows[0]||[]).map(h=>`<th>${h??''}</th>`).join('')}</tr></thead>
+                <tbody>${rows.slice(1,6).map(row=>`<tr>${(rows[0]||[]).map((_,ci)=>`<td>${row[ci]??''}</td>`).join('')}</tr>`).join('')}</tbody>
+              </table>
+            </div>
+          </div>`;
+        });
+        window._importedData = {wb, sheetNames: wb.SheetNames, totalRows};
+        document.getElementById('import-preview').innerHTML = preview;
+        document.getElementById('import-preview-wrap').style.display = '';
+        document.getElementById('import-empty-state').style.display = 'none';
+        document.getElementById('import-apply-btn').style.display = '';
+        showToast(`✅ Arquivo lido: ${wb.SheetNames.length} aba(s), ${totalRows} registros`);
+      } catch(err) {
+        showToast('❌ Erro ao ler arquivo. Use .xlsx ou .csv', '#f85149');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function applyImport() {
+    if (!window._importedData) return;
+    const {wb, totalRows} = window._importedData;
+    // Update eleitores counter if sheet exists
+    const elSheet = wb.Sheets['Eleitores'];
+    if (elSheet) {
+      const rows = XLSX.utils.sheet_to_json(elSheet, {header:1});
+      const count = rows.length - 1;
+      const el = document.getElementById('counter-eleitores');
+      if (el) el.textContent = count.toLocaleString('pt-BR');
+      document.querySelector('[data-key="crm-eleitores"] .stat-value, #mod-crm .stat-value')?.dispatchEvent(new Event('change'));
+    }
+    // Log to history
+    const now = new Date().toLocaleString('pt-BR');
+    const hist = document.getElementById('import-historico-list');
+    const entry = document.createElement('div');
+    entry.className = 'metric-row';
+    entry.innerHTML = `<div class="metric-key">📊 Importação em ${now}</div><div class="metric-val">${totalRows} registros · ${wb.SheetNames.length} aba(s)</div>`;
+    if (hist.querySelector('div[style]')) hist.innerHTML = '';
+    hist.prepend(entry);
+    // Update stats
+    const el_cnt = document.getElementById('dados-import-count');
+    if (el_cnt) el_cnt.textContent = totalRows.toLocaleString('pt-BR');
+    const el_time = document.getElementById('dados-import-time');
+    if (el_time) el_time.textContent = new Date().toLocaleTimeString('pt-BR');
+    showToast(`✅ ${totalRows} registros aplicados ao sistema!`);
+  }
+
+  function _buildModeloSheets() {
+    const bairros2024 = HIST_DATA.bairros_municipais['2024'] || [];
+    const bairros2020 = HIST_DATA.bairros_municipais['2020'] || [];
+    return {
+      'Eleitores': [
+        ['Nome','Telefone','Bairro','Município','Idade','Profissão','Classificação','Observações'],
+        ['Maria da Silva','(69) 99999-0000','Centro','Porto Velho','35','Professora','Confirmado','Indicada por João Pereira'],
+        ['João Pereira','(69) 98888-1111','Juscelino Kubitschek','Porto Velho','42','Comerciante','Simpatizante',''],
+        ['Ana Costa','(69) 97777-2222','Setor 01','Porto Velho','28','Enfermeira','Confirmado','Liderança de bairro'],
+        ['Pedro Lima','(69) 96666-3333','Nova Brasília','Porto Velho','55','Agricultor','Indeciso','Contato em andamento'],
+      ],
+      'Lideranças': [
+        ['Nome','Bairro','Município','Cargo/Função','Votos Estimados','Telefone','Status','Partido Simpatizante'],
+        ['Ana Costa','Centro','Porto Velho','Presidente de Bairro','150','(69) 97777-2222','Ativo',''],
+        ['Raimundo Ferreira','JK','Porto Velho','Agente Comunitário','80','(69) 96666-4444','Ativo',''],
+        ['Maria Souza','Setor 02','Porto Velho','Vereadora 2020','200','(69) 95555-5555','Parceiro','PSD'],
+      ],
+      'Bairros': [
+        ['Bairro','Município','Votos 2024','Votos 2020','Apoiadores Atuais','Zona Eleitoral'],
+        ...bairros2024.slice(0,20).map(b => {
+          const b20 = bairros2020.find(x => x.bairro === b.bairro);
+          return [b.bairro,'Porto Velho — RO',b.votos,b20?.votos||'',0,
+            b.votos>50000?'Zona Forte':b.votos>20000?'Zona Média':'Zona Fraca'];
+        })
+      ],
+      'Agenda': [
+        ['Data','Hora','Evento','Local','Bairro','Município','Responsável','Status','Participantes Esperados'],
+        ['15/04/2026','18:00','Caminhada','Praça Central','Centro','Porto Velho','Carlos Mendes','Confirmado','500'],
+        ['20/04/2026','09:00','Café com Eleitores','Salão Paroquial','JK','Porto Velho','Ana Costa','Planejado','80'],
+        ['25/04/2026','19:30','Comício','Praça da Bandeira','Setor 01','Porto Velho','Carlos Mendes','Planejado','2000'],
+      ],
+      'Materiais': [
+        ['Item','Quantidade Total','Distribuídos','Em Estoque','Custo Unit (R$)','Total (R$)','Responsável'],
+        ['Santinhos A6','50000','0','50000','0.15','7500','Coord. Materiais'],
+        ['Camisetas M','250','0','250','12.00','3000','Coord. Materiais'],
+        ['Camisetas G','250','0','250','12.00','3000','Coord. Materiais'],
+        ['Placas 50x70','200','0','200','25.00','5000','Coord. Materiais'],
+        ['Bonés','500','0','500','8.00','4000','Coord. Materiais'],
+        ['Adesivos','10000','0','10000','0.08','800','Coord. Materiais'],
+      ],
+      'Financeiro': [
+        ['Data','Descrição','Tipo','Valor (R$)','Categoria','Responsável','Comprovante'],
+        ['01/03/2026','Doação PF','Receita','5000.00','Doação','Tesoureiro','Recibo 001'],
+        ['05/03/2026','Gráfica — Santinhos','Despesa','7500.00','Material Gráfico','Coord. Materiais','NF 12345'],
+        ['10/03/2026','Camisetas','Despesa','6000.00','Material Gráfico','Coord. Materiais','NF 12346'],
+        ['15/03/2026','Doação PJ','Receita','10000.00','Doação Empresarial','Tesoureiro','Recibo 002'],
+        ['20/03/2026','Combustível','Despesa','800.00','Logística','Coord. Rua','Cupom Fiscal'],
+      ]
+    };
+  }
+
+  function downloadModeloExcel() {
+    if (typeof XLSX === 'undefined') {
+      showToast('⚠️ Biblioteca Excel não carregada. Verifique sua conexão.', '#e3b341');
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    const sheets = _buildModeloSheets();
+    Object.entries(sheets).forEach(([name, data]) => {
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      // Auto column width
+      const cols = (data[0]||[]).map((_, ci) => ({
+        wch: Math.max(...data.map(r => String(r[ci]??'').length), String(data[0][ci]||'').length) + 2
+      }));
+      ws['!cols'] = cols;
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    });
+    XLSX.writeFile(wb, 'modelo-campanha-votamax.xlsx');
+    showToast('📊 Modelo Excel baixado com sucesso!');
+  }
+
+  function downloadSheetModelo(sheetName) {
+    if (typeof XLSX === 'undefined') {
+      showToast('⚠️ Biblioteca Excel não carregada. Verifique sua conexão.', '#e3b341');
+      return;
+    }
+    const sheets = _buildModeloSheets();
+    if (!sheets[sheetName]) return;
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(sheets[sheetName]);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `modelo-${sheetName.toLowerCase()}-votamax.xlsx`);
+    showToast(`📄 Modelo "${sheetName}" baixado!`);
+  }
+
+  // Restore edited values from localStorage on load
+  window.addEventListener('load', () => {
+    const saved = JSON.parse(localStorage.getItem('campanhaEditData') || '{}');
+    if (Object.keys(saved).length) {
+      document.querySelectorAll('.stat-value[data-key]').forEach(el => {
+        if (saved[el.dataset.key]) el.textContent = saved[el.dataset.key];
+      });
+    }
+  });
 
   function renderMuniAll() {
     renderMuniTable();
